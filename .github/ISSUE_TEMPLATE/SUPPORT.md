@@ -1,6 +1,6 @@
 ---
 name: Support
-about: Get help using forkphorus
+about: Get help using TurboWarp
 title: "[Support]"
 labels: support
 assignees: ''
