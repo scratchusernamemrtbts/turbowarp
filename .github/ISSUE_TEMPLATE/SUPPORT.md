@@ -2,7 +2,7 @@
 name: Support
 about: Get help using TurboWarp
 title: "[Support]"
-labels: support
+labels: question
 assignees: ''
 
 ---
