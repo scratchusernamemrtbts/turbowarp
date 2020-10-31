@@ -10,17 +10,17 @@ assignees: ''
 
 ###### Expected Behavior
 
-<---Please describe what should happen--->
+<!---Please describe what should happen--->
 
 ###### Actual Behavior
 
-<---Describe what actually happens--->
+<!---Describe what actually happens--->
 
 **Project ID, url, or file**
 
 
 **Device Information (Device, Operating System, Browser)**
-<---e.g. IMac 27inch 2017 intel core i5 Mac OS 11.0.1 beta Safari 14.1--->
+<!---e.g. IMac 27inch 2017 intel core i5 Mac OS 11.0.1 beta Safari 14.1--->
 
 
 **Additional context or screenshots**
@@ -28,6 +28,6 @@ assignees: ''
 
 **Steps to Reproduce**
 
-_Explain what someone needs to do in order to see what's described in *Actual behavior* above_
+<!--Explain what someone needs to do in order to see what's described in *Actual behavior* above-->
 
 
