@@ -31,8 +31,6 @@ import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 
-import Homepage from '../../components/tw-home/tw-home.jsx';
-
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
 
@@ -81,7 +79,6 @@ const GUIComponent = props => {
         connectionModalVisible,
         costumeLibraryVisible,
         costumesTabVisible,
-        editingTarget,
         enableCommunity,
         intl,
         isCreating,
@@ -116,7 +113,6 @@ const GUIComponent = props => {
         showComingSoon,
         soundsTabVisible,
         stageSizeMode,
-        sprites,
         targetIsStage,
         telemetryModalVisible,
         tipsLibraryVisible,
@@ -239,9 +235,6 @@ const GUIComponent = props => {
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
                         <Box className={styles.editorWrapper}>
-                            {sprites[editingTarget] && sprites[editingTarget].name === '__twhomepage__' ? (
-                                <Homepage></Homepage>
-                            ) : null}
                             <Tabs
                                 forceRenderTabPanel
                                 className={tabClassNames.tabs}
@@ -388,7 +381,6 @@ GUIComponent.propTypes = {
     children: PropTypes.node,
     costumeLibraryVisible: PropTypes.bool,
     costumesTabVisible: PropTypes.bool,
-    editingTarget: PropTypes.string,
     enableCommunity: PropTypes.bool,
     intl: intlShape.isRequired,
     isCreating: PropTypes.bool,
@@ -422,7 +414,6 @@ GUIComponent.propTypes = {
     renderLogin: PropTypes.func,
     showComingSoon: PropTypes.bool,
     soundsTabVisible: PropTypes.bool,
-    sprites: PropTypes.object,
     stageSizeMode: PropTypes.oneOf(Object.keys(STAGE_SIZE_MODES)),
     targetIsStage: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
@@ -451,10 +442,8 @@ GUIComponent.defaultProps = {
 };
 
 const mapStateToProps = state => ({
-    sprites: state.scratchGui.targets.sprites,
     // This is the button's mode, as opposed to the actual current state
-    stageSizeMode: state.scratchGui.stageSize.stageSize,
-    editingTarget: state.scratchGui.targets.editingTarget,
+    stageSizeMode: state.scratchGui.stageSize.stageSize
 });
 
 export default injectIntl(connect(

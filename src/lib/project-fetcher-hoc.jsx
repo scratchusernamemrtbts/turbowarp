@@ -23,6 +23,9 @@ import {
 import log from './log';
 import storage from './storage';
 
+import {MISSING_PROJECT_ID} from './tw-missing-project';
+import VM from 'scratch-vm';
+
 /* Higher Order Component to provide behavior for loading projects by id. If
  * there's no id, the default project is loaded.
  * @param {React.Component} WrappedComponent component to receive projectData prop
@@ -68,14 +71,26 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject (projectId, loadingState) {
+            // tw: clear the VM before fetching
+            // this matters because we fetch many projects in the same VM,
+            // and the old project should stop when starting to fetch the new one
+            // VM.loadProject also does this, but that won't run until after fetching (which may take a while)
+            this.props.vm.clear();
             return storage
                 .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON)
                 .then(projectAsset => {
-                    // tw: If the project data appears to be HTML, then this project doesn't exist.
-                    // When this happens, we'll replace the project with some minimal empty project instead of showing an error screen.
-                    if (projectAsset.data[0] === '<' || projectAsset.data[0] === 60) {
-                        projectAsset.data = '{"targets":[{"isStage":true,"name":"Stage","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"assetId":"30604b794e9cc27cc58e4fa93c98ccd1","name":"backdrop1","bitmapResolution":1,"md5ext":"30604b794e9cc27cc58e4fa93c98ccd1.svg","dataFormat":"svg","rotationCenterX":207.4166717529297,"rotationCenterY":15.981249999999989}],"sounds":[],"volume":100,"layerOrder":0,"tempo":60,"videoTransparency":50,"videoState":"on","textToSpeechLanguage":null}],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0-prerelease.20200720182258","agent":""}}';
+                    // tw: If the project data appears to be HTML, then the result is probably an nginx 404 page,
+                    // and the "missing project" project should be loaded instead.
+                    // See: https://projects.scratch.mit.edu/9999999999999999999999
+                    if (projectAsset && projectAsset.data) {
+                        const firstChar = projectAsset.data[0];
+                        if (firstChar === '<' || firstChar === '<'.charCodeAt(0)) {
+                            return storage.load(storage.AssetType.Project, MISSING_PROJECT_ID, storage.DataFormat.JSON);
+                        }
                     }
+                    return projectAsset;
+                })
+                .then(projectAsset => {
                     if (projectAsset) {
                         this.props.onFetchedProjectData(projectAsset.data, loadingState);
                     } else {
@@ -132,7 +147,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         projectHost: PropTypes.string,
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        setProjectId: PropTypes.func
+        setProjectId: PropTypes.func,
+        vm: PropTypes.instanceOf(VM)
     };
     ProjectFetcherComponent.defaultProps = {
         assetHost: 'https://assets.scratch.mit.edu',
@@ -145,7 +161,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         isLoadingProject: getIsLoading(state.scratchGui.projectState.loadingState),
         isShowingProject: getIsShowingProject(state.scratchGui.projectState.loadingState),
         loadingState: state.scratchGui.projectState.loadingState,
-        reduxProjectId: state.scratchGui.projectState.projectId
+        reduxProjectId: state.scratchGui.projectState.projectId,
+        vm: state.scratchGui.vm
     });
     const mapDispatchToProps = dispatch => ({
         onActivateTab: tab => dispatch(activateTab(tab)),

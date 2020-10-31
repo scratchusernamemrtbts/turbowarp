@@ -14,6 +14,7 @@
     cursor: pointer;
     user-select: none;
     opacity: 0.8;
+    color: #222;
 }
 
 .opener-container:hover {
@@ -30,20 +31,11 @@
 .projects {
     position: relative;
     height: 154px;
-    transition: height .2s;
+    transition: .2s height;
 }
 
 .opened .projects {
     height: 310px;
-}
-
-@media only screen and (max-height: 750px) {
-    .responsive .projects {
-        height: 60px;
-    }
-    .responsive.opened .projects {
-        height: 155px;
-    }
 }
 
 .footer {

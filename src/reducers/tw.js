@@ -1,69 +1,46 @@
-const SET_COMPATIBILITY_STATE = 'tw/SET_COMPATIBILITY_STATE';
-const SET_COMPILER_STATE = 'tw/SET_COMPILER_STATE';
+const SET_FRAMERATE = 'tw/SET_FRAMERATE';
+const SET_COMPILER_OPTIONS = 'tw/SET_COMPILER_OPTIONS';
 const SET_USERNAME = 'tw/SET_USERNAME';
 const SET_CLOUD = 'tw/SET_CLOUD';
 const SET_HIGH_QUALITY_PEN = 'tw/SET_HIGH_QUALITY_PEN';
-
-const USERNAME_KEY = 'tw:username';
-
-const searchParams = new URLSearchParams(location.search);
-
-const getInitialCompatibility = () => {
-    if (searchParams.has('60fps')) {
-        return false;
-    }
-    return true;
-};
-
-const getInitialUsername = () => {
-    if (searchParams.has('username')) {
-        return searchParams.get('username');
-    }
-    try {
-        const result = localStorage.getItem(USERNAME_KEY);
-        if ('' + result === 'null') throw new Error('Temporary username fix');
-        if (result) {
-            return result;
-        }
-    } catch (e) { /* ignore */ }
-    const randomId = Math.random().toString().substr(2, 6);
-    const username = `player${randomId}`;
-    try {
-        localStorage.setItem(USERNAME_KEY, username);
-    } catch (e) { /* ignore */ }
-    return username;
-};
-
-const getInitialHighQualityPen = () => {
-    if (searchParams.has('hqpen')) {
-        return true;
-    }
-    return false;
-};
+const SET_WINDOW_FULLSCREEN = 'tw/SET_WINDOW_FULLSCREEN';
+const SET_DIMENSIONS = 'tw/SET_DIMENSIONS';
+const SET_AUTHOR = 'tw/SET_AUTHOR';
+const SET_DESCRIPTION = 'tw/SET_DESCRIPTION';
 
 export const initialState = {
-    compatibility: getInitialCompatibility(),
-    compiler: true,
+    framerate: 30,
     cloud: true,
-    username: getInitialUsername(),
-    highQualityPen: getInitialHighQualityPen()
+    username: '',
+    highQualityPen: false,
+    compilerOptions: {
+        enabled: true,
+        warpTimer: false
+    },
+    isWindowFullScreen: false,
+    dimensions: [0, 0],
+    author: {
+        username: '',
+        thumbnail: ''
+    },
+    description: {
+        instructions: '',
+        credits: ''
+    }
 };
 
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
     switch (action.type) {
-    case SET_COMPATIBILITY_STATE:
+    case SET_FRAMERATE:
         return Object.assign({}, state, {
-            compatibility: action.compatibility
+            framerate: action.framerate
         });
-    case SET_COMPILER_STATE:
+    case SET_COMPILER_OPTIONS:
         return Object.assign({}, state, {
-            compiler: action.compiler
+            compilerOptions: action.compilerOptions
         });
     case SET_USERNAME:
-        try {
-            localStorage.setItem(USERNAME_KEY, action.username);
-        } catch (e) { /* ignore */ }
         return Object.assign({}, state, {
             username: action.username
         });
@@ -75,22 +52,38 @@ const reducer = function (state, action) {
         return Object.assign({}, state, {
             highQualityPen: action.highQualityPen
         });
+    case SET_WINDOW_FULLSCREEN:
+        return Object.assign({}, state, {
+            isWindowFullScreen: action.isWindowFullScreen
+        });
+    case SET_DIMENSIONS:
+        return Object.assign({}, state, {
+            dimensions: action.dimensions
+        });
+    case SET_AUTHOR:
+        return Object.assign({}, state, {
+            author: action.author
+        });
+    case SET_DESCRIPTION:
+        return Object.assign({}, state, {
+            description: action.description
+        });
     default:
         return state;
     }
 };
 
-const setCompatibilityState = function (compatibility) {
+const setFramerateState = function (framerate) {
     return {
-        type: SET_COMPATIBILITY_STATE,
-        compatibility: compatibility
+        type: SET_FRAMERATE,
+        framerate: framerate
     };
 };
 
-const setCompilerState = function (compiler) {
+const setCompilerOptionsState = function (compilerOptions) {
     return {
-        type: SET_COMPILER_STATE,
-        compiler: compiler
+        type: SET_COMPILER_OPTIONS,
+        compilerOptions: compilerOptions
     };
 };
 
@@ -108,19 +101,51 @@ const setCloud = function (cloud) {
     };
 };
 
-const setHighQualityPen = function (highQualityPen) {
+const setHighQualityPenState = function (highQualityPen) {
     return {
         type: SET_HIGH_QUALITY_PEN,
         highQualityPen: highQualityPen
     };
 };
 
+const setIsWindowFullScreen = function (isWindowFullScreen) {
+    return {
+        type: SET_WINDOW_FULLSCREEN,
+        isWindowFullScreen: isWindowFullScreen
+    };
+};
+
+const setDimensions = function (dimensions) {
+    return {
+        type: SET_DIMENSIONS,
+        dimensions: dimensions
+    };
+};
+
+const setAuthor = function (author) {
+    return {
+        type: SET_AUTHOR,
+        author: author
+    };
+};
+
+const setDescription = function (description) {
+    return {
+        type: SET_DESCRIPTION,
+        description: description
+    };
+};
+
 export {
     reducer as default,
     initialState as twInitialState,
-    setCompatibilityState,
-    setCompilerState,
+    setFramerateState,
+    setCompilerOptionsState,
     setUsername,
     setCloud,
-    setHighQualityPen
+    setHighQualityPenState,
+    setIsWindowFullScreen,
+    setDimensions,
+    setAuthor,
+    setDescription
 };

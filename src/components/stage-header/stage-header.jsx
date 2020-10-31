@@ -56,29 +56,16 @@ const StageHeaderComponent = function (props) {
         onSetStageSmall,
         onSetStageFull,
         onSetStageUnFull,
-        showBranding,
+        isEmbedded,
         stageSizeMode,
         vm
     } = props;
 
     let header = null;
 
-    if (isFullScreen) {
+    if (isFullScreen || isEmbedded) {
         const stageDimensions = getStageDimensions(null, true);
-        const stageButton = showBranding ? (
-            <div className={styles.embedScratchLogo}>
-                <a
-                    href="https://scratch.mit.edu"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                >
-                    <img
-                        alt="Scratch"
-                        src={scratchLogo}
-                    />
-                </a>
-            </div>
-        ) : (
+        const stageButton = isFullScreen ? (
             <Button
                 className={styles.stageButton}
                 onClick={onSetStageUnFull}
@@ -92,9 +79,27 @@ const StageHeaderComponent = function (props) {
                     title={props.intl.formatMessage(messages.fullscreenControl)}
                 />
             </Button>
+            
+        ) : (
+            <Button
+                className={styles.stageButton}
+                onClick={onSetStageFull}
+            >
+                <img
+                    alt={props.intl.formatMessage(messages.fullStageSizeMessage)}
+                    className={styles.stageButtonIcon}
+                    draggable={false}
+                    src={fullScreenIcon}
+                    title={props.intl.formatMessage(messages.fullscreenControl)}
+                />
+            </Button>
         );
         header = (
-            <Box className={styles.stageHeaderWrapperOverlay}>
+            <Box
+                className={classNames(styles.stageHeaderWrapperOverlay, {
+                    [styles.stageHeaderEmbed]: isEmbedded
+                })}
+            >
                 <Box
                     className={styles.stageMenuWrapper}
                     style={{width: stageDimensions.width}}
@@ -189,13 +194,12 @@ StageHeaderComponent.propTypes = {
     onSetStageLarge: PropTypes.func.isRequired,
     onSetStageSmall: PropTypes.func.isRequired,
     onSetStageUnFull: PropTypes.func.isRequired,
-    showBranding: PropTypes.bool.isRequired,
+    isEmbedded: PropTypes.bool.isRequired,
     stageSizeMode: PropTypes.oneOf(Object.keys(STAGE_SIZE_MODES)),
     vm: PropTypes.instanceOf(VM).isRequired
 };
 
 StageHeaderComponent.defaultProps = {
-    showBranding: false, // tw: never show branding, this should be passed up from container but for some reason it's not. This is a quick and dirty fix.
     stageSizeMode: STAGE_SIZE_MODES.large
 };
 

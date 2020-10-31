@@ -1,14 +1,11 @@
-import './tw-imports';
+import './import-first';
 
 import ReactDOM from 'react-dom';
 import React from 'react';
 
-import Player from './render-gui.jsx';
+import Interface from './render-interface.jsx';
+import appTarget from './app-target';
 
-const appTarget = document.createElement('div');
-document.body.appendChild(appTarget);
-document.body.classList.add('tw-loaded');
-ReactDOM.render(<Player
+ReactDOM.render(<Interface
     isPlayerOnly
-    canSeeInside
 />, appTarget);

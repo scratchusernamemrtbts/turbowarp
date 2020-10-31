@@ -1,3 +1,4 @@
+/* eslint-disable */
 // Imported from:
 // https://github.com/forkphorus/forkphorus/tree/master/studioview
 // With changes to make it work properly in the scratch-gui environment.
@@ -44,7 +45,6 @@ var StudioView = function (studioId) {
     this.projectList.className = styles.studioviewList;
     this.projectList.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
     this.root.appendChild(this.projectList);
-    this.setTheme('light');
 
     if ('IntersectionObserver' in window) {
         this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), {
@@ -311,10 +311,6 @@ StudioView.prototype.loadNextPage = function () {
     xhr.send();
 };
 
-StudioView.prototype.setTheme = function (theme) {
-    this.root.setAttribute('theme', theme);
-};
-
 StudioView.prototype.getURL = function () {
     return StudioView.STUDIO_PAGE.replace('$id', this.studioId);
 };
@@ -356,7 +352,7 @@ StudioView.Shufflers.random = function (groupSize) {
 // This can be any URL that is a proxy for https://scratch.mit.edu/site-api/projects/in/5235006/1/
 // Understandably scratch does not set CORS headers on this URL, but a proxy can set it manually.
 // $id will be replaced with the studio ID, and $page with the page.
-StudioView.STUDIO_API = 'https://scratch.garbomuffin.com/site-proxy/projects/in/$id/$page/';
+StudioView.STUDIO_API = 'https://trampoline.turbowarp.org/site-proxy/projects/in/$id/$page/';
 
 // The URL to download thumbnails from.
 // $id is replaced with the project's ID.
