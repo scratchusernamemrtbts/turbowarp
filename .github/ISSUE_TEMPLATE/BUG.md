@@ -6,7 +6,7 @@ labels: bug
 assignees: ''
 
 ---
-**Describe the bug, including any steps to reproduce it**
+**Describe the bug**
 
 ###### Expected Behavior
 
