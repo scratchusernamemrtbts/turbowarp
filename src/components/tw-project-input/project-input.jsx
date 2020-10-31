@@ -3,8 +3,10 @@ import React from 'react';
 import {connect} from 'react-redux';
 import bindAll from 'lodash.bindall';
 
-import {defaultProjectId, setProjectId} from '../../reducers/project-state';
+import {defaultProjectId, setProjectId, getIsLoading, getIsFetchingWithId} from '../../reducers/project-state';
 import styles from './project-input.css';
+
+const PROJECT_BASE = 'https://scratch.mit.edu/projects/';
 
 class ProjectInput extends React.Component {
     constructor (props) {
@@ -14,20 +16,23 @@ class ProjectInput extends React.Component {
             'handleChange',
             'handlePaste',
             'handleBlur',
-            'handleFocus'
+            'handleFocus',
+            'inputRef'
         ]);
         this.state = {
-            projectId: ''
+            projectId: this.props.projectId
         };
     }
-    componentDidMount () {
-        this.input.focus();
-        this.input.selectionStart = this.input.value.length;
-    }
     componentDidUpdate (prevProps) {
-        if (this.props.projectId !== prevProps.projectId) {
+        if (this.props.projectId !== prevProps.projectId || this.props.loading !== prevProps.loading) {
+            if (this.props.projectId === defaultProjectId) {
+                this.input.focus();
+                this.input.selectionStart = this.input.value.length;
+            } else {
+                this.input.blur();
+            }
             this.setState({
-                projectId: this.props.projectId || ''
+                projectId: this.props.projectId
             });
         }
     }
@@ -47,10 +52,10 @@ class ProjectInput extends React.Component {
     }
     handleChange (e) {
         this.setState({
-            projectId: this.readProjectId(e)
+            projectId: this.readProjectId(e) || defaultProjectId
         });
     }
-    handlePaste (e) {
+    handlePaste () {
         // const data = e.clipboardData.getData('Text');
         // const id = this.extractProjectId(data);
         // if (id) {
@@ -65,25 +70,28 @@ class ProjectInput extends React.Component {
         }
     }
     handleFocus (e) {
-        if (this.readProjectId(e)) {
+        if (this.extractProjectId(e.target.value)) {
             e.target.select();
         }
     }
+    inputRef (el) {
+        this.input = el;
+    }
     render () {
-        const projectId = this.state.projectId === defaultProjectId ? '' : this.state.projectId;
+        const projectId = this.state.projectId === defaultProjectId ? '' : this.state.projectId || '';
         return (
             <input
-                ref={elem => this.input = elem}
+                ref={this.inputRef}
                 spellCheck="false"
                 type="text"
-                value={`https://scratch.mit.edu/projects/${projectId}`}
-                autoFocus
+                value={`${PROJECT_BASE}${projectId}`}
                 className={styles.input}
                 onKeyDown={this.handleKeyDown}
                 onChange={this.handleChange}
                 onPaste={this.handlePaste}
                 onBlur={this.handleBlur}
                 onFocus={this.handleFocus}
+                disabled={this.props.loading}
             />
         );
     }
@@ -91,11 +99,13 @@ class ProjectInput extends React.Component {
 
 ProjectInput.propTypes = {
     projectId: PropTypes.string,
-    setProjectId: PropTypes.func
+    setProjectId: PropTypes.func,
+    loading: PropTypes.bool
 };
 
 const mapStateToProps = state => ({
-    projectId: state.scratchGui.projectState.projectId
+    projectId: state.scratchGui.projectState.projectId,
+    loading: getIsLoading(state.scratchGui.projectState.loadingState) || getIsFetchingWithId(state.scratchGui.projectState.loadingState)
 });
 
 const mapDispatchToProps = dispatch => ({

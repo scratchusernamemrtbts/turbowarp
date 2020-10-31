@@ -6,7 +6,7 @@ import {FormattedMessage} from 'react-intl';
 import {connect} from 'react-redux';
 import StudioView from '../tw-studioview/studioview.jsx';
 import styles from './examples.css';
-import {getIsLoading, setProjectId} from '../../reducers/project-state';
+import {getIsLoading, getIsFetchingWithId, setProjectId} from '../../reducers/project-state';
 
 const studioId = '27205657';
 
@@ -36,12 +36,17 @@ class Examples extends React.Component {
                 className={classNames(
                     styles.container,
                     {
-                        [styles.opened]: opened,
-                        [styles.responsive]: this.props.responsive
+                        [styles.opened]: opened
                     }
                 )}
             >
                 <div className={styles.projects}>
+                    <StudioView
+                        id={studioId}
+                        onSelect={this.handleSelect}
+                        disabled={this.props.loading}
+                        placeholder={!opened}
+                    />
                     {opened ? null : (
                         <div
                             className={styles.openerContainer}
@@ -56,12 +61,6 @@ class Examples extends React.Component {
                             </div>
                         </div>
                     )}
-                    <StudioView
-                        id={studioId}
-                        onSelect={this.handleSelect}
-                        disabled={this.props.loading}
-                        placeholder={!opened}
-                    />
                 </div>
                 <div className={styles.footer}>
                     <a
@@ -82,13 +81,13 @@ class Examples extends React.Component {
 }
 
 Examples.propTypes = {
-    responsive: PropTypes.bool,
     loading: PropTypes.bool,
     setProjectId: PropTypes.func
 };
 
 const mapStateToProps = state => ({
-    loading: getIsLoading(state.scratchGui.projectState.loadingState)
+    loading: getIsLoading(state.scratchGui.projectState.loadingState) ||
+        getIsFetchingWithId(state.scratchGui.projectState.loadingState)
 });
 
 const mapDispatchToProps = dispatch => ({

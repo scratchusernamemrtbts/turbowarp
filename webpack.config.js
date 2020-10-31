@@ -13,6 +13,19 @@ var postcssImport = require('postcss-import');
 
 const STATIC_PATH = process.env.STATIC_PATH || '/static';
 
+let root = process.env.ROOT || '';
+if (root.length > 0 && !root.endsWith('/')) {
+    throw new Error('If ROOT is defined, it must have a trailing slash.');
+}
+
+const htmlWebpackPluginCommon = {
+    plausible: process.env.PLAUSIBLE_HOST ? {
+        host: process.env.PLAUSIBLE_HOST,
+        domain: process.env.PLAUSIBLE_DOMAIN
+    } : null,
+    root: root
+};
+
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devtool: process.env.NODE_ENV === 'production' ? false : 'cheap-module-source-map',
@@ -23,8 +36,9 @@ const base = {
     },
     output: {
         library: 'GUI',
-        filename: 'js/[name].[contenthash].js',
-        chunkFilename: 'js/[name].[contenthash].js'
+        filename: process.env.NODE_ENV === 'production' ? 'js/[name].[contenthash].js' : 'js/[name].js',
+        chunkFilename: process.env.NODE_ENV === 'production' ? 'js/[name].[contenthash].js' : 'js/[name].js',
+        publicPath: root
     },
     externals: {
         React: 'react',
@@ -95,12 +109,13 @@ module.exports = [
     // to run editor examples
     defaultsDeep({}, base, {
         entry: {
-            'editor': './src/playground/editor.jsx',
-            'player': './src/playground/player.jsx'
+            editor: './src/playground/editor.jsx',
+            player: './src/playground/player.jsx',
+            fullscreen: './src/playground/fullscreen.jsx',
+            embed: './src/playground/embed.jsx'
         },
         output: {
-            path: path.resolve(__dirname, 'build'),
-            filename: '[name].js'
+            path: path.resolve(__dirname, 'build')
         },
         externals: {
             React: 'react',
@@ -120,19 +135,7 @@ module.exports = [
         optimization: {
             splitChunks: {
                 chunks: 'all',
-                cacheGroups: {
-                    vendors: {
-                        name: 'vendors',
-                        test: /[\\/]node_modules[\\/]/,
-                        priority: -10
-                    },
-                    default: {
-                        name: 'gui',
-                        minChunks: 2,
-                        priority: -20,
-                        reuseExistingChunk: true
-                    }
-                }
+                minChunks: 2
             },
             runtimeChunk: {
                 name: 'runtime'
@@ -142,23 +145,41 @@ module.exports = [
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': '"' + process.env.NODE_ENV + '"',
                 'process.env.DEBUG': Boolean(process.env.DEBUG),
-                'process.env.GA_ID': '"' + (process.env.GA_ID || 'UA-000000-01') + '"'
+                'process.env.ANNOUNCEMENT': process.env.ANNOUNCEMENT ? '"' + process.env.ANNOUNCEMENT + '"' : '""',
+                'process.env.ROOT': JSON.stringify(root),
+                'process.env.ROUTING_STYLE': JSON.stringify(process.env.ROUTING_STYLE || 'filehash'),
+                'process.env.PLAUSIBLE_HOST': JSON.stringify(process.env.PLAUSIBLE_HOST),
+                'process.env.PLAUSIBLE_DOMAIN': JSON.stringify(process.env.PLAUSIBLE_DOMAIN)
             }),
             new HtmlWebpackPlugin({
                 chunks: ['editor'],
                 template: 'src/playground/index.ejs',
                 filename: 'editor.html',
                 title: 'TurboWarp Editor',
-                sentryConfig: process.env.SENTRY_CONFIG
+                ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
                 chunks: ['player'],
                 template: 'src/playground/index.ejs',
                 filename: 'index.html',
                 title: 'TurboWarp - Run Scratch projects faster',
-                sentryConfig: process.env.SENTRY_CONFIG
+                ...htmlWebpackPluginCommon
             }),
-            new HtmlWebpackPlugin({ // turbowarp privacy policy
+            new HtmlWebpackPlugin({
+                chunks: ['fullscreen'],
+                template: 'src/playground/index.ejs',
+                filename: 'fullscreen.html',
+                title: 'TurboWarp',
+                ...htmlWebpackPluginCommon
+            }),
+            new HtmlWebpackPlugin({
+                chunks: ['embed'],
+                template: 'src/playground/index.ejs',
+                filename: 'embed.html',
+                title: 'TurboWarp',
+                ...htmlWebpackPluginCommon
+            }),
+            new HtmlWebpackPlugin({
                 chunks: [],
                 template: 'src/playground/privacy.html',
                 filename: 'privacy.html'
@@ -185,6 +206,7 @@ module.exports = [
 ].concat(
     process.env.NODE_ENV === 'production' || process.env.BUILD_MODE === 'dist' ? (
         // export as library
+        // tw: TODO: need to see if this even works anymore
         defaultsDeep({}, base, {
             target: 'web',
             entry: {

@@ -18,7 +18,7 @@ import {
     deactivateColorPicker
 } from '../reducers/color-picker';
 
-import {setHighQualityPen} from '../reducers/tw';
+import {setHighQualityPenState} from '../reducers/tw';
 
 const colorPickerRadius = 20;
 const dragThreshold = 3; // Same as the block drag threshold
@@ -71,8 +71,7 @@ class Stage extends React.Component {
             // default color
             this.props.vm.renderer.draw();
 
-            // tw: implement high quality pen
-            this.renderer.setUseHighQualityPen(this.props.highQualityPen);
+            // tw: handle changes to high quality pen
             this.props.vm.renderer.on('UseHighQualityPenChanged', this.props.onHighQualityPenChanged);
         }
         this.props.vm.attachV2SVGAdapter(new V2SVGAdapter());
@@ -89,6 +88,9 @@ class Stage extends React.Component {
             this.props.isColorPicking !== nextProps.isColorPicking ||
             this.state.colorInfo !== nextState.colorInfo ||
             this.props.isFullScreen !== nextProps.isFullScreen ||
+            // tw: update when dimensions or isWindowFullScreen changes
+            this.props.isWindowFullScreen !== nextProps.isWindowFullScreen ||
+            this.props.dimensions !== nextProps.dimensions ||
             this.state.question !== nextState.question ||
             this.props.micIndicator !== nextProps.micIndicator ||
             this.props.isStarted !== nextProps.isStarted;
@@ -445,6 +447,9 @@ Stage.propTypes = {
     disableEditingTargetChange: PropTypes.bool,
     isColorPicking: PropTypes.bool,
     isFullScreen: PropTypes.bool.isRequired,
+    // tw: update when dimensions or isWindowFullScreen changes
+    isWindowFullScreen: PropTypes.bool,
+    dimensions: PropTypes.arrayOf(PropTypes.number),
     isStarted: PropTypes.bool,
     micIndicator: PropTypes.bool,
     onActivateColorPicker: PropTypes.func,
@@ -464,7 +469,11 @@ const mapStateToProps = state => ({
     // tw: Disable editing target changing in certain circumstances to avoid lag
     disableEditingTargetChange: state.scratchGui.mode.isFullScreen || state.scratchGui.mode.isPlayerOnly,
     isColorPicking: state.scratchGui.colorPicker.active,
-    isFullScreen: state.scratchGui.mode.isFullScreen,
+    // tw: embed is always considered fullscreen
+    isFullScreen: state.scratchGui.mode.isFullScreen || state.scratchGui.mode.isEmbedded,
+    // tw: update when dimensions or isWindowFullScreen changes
+    isWindowFullScreen: state.scratchGui.tw.isWindowFullScreen,
+    dimensions: state.scratchGui.tw.dimensions,
     isStarted: state.scratchGui.vmStatus.started,
     micIndicator: state.scratchGui.micIndicator,
     // Do not use editor drag style in fullscreen or player mode.
@@ -473,7 +482,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     // tw: handler for syncing high quality pen option changes
-    onHighQualityPenChanged: enabled => dispatch(setHighQualityPen(enabled)),
+    onHighQualityPenChanged: enabled => dispatch(setHighQualityPenState(enabled)),
     onActivateColorPicker: () => dispatch(activateColorPicker()),
     onDeactivateColorPicker: color => dispatch(deactivateColorPicker(color))
 });

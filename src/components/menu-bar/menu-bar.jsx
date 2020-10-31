@@ -27,12 +27,12 @@ import DeletionRestorer from '../../containers/deletion-restorer.jsx';
 import TurboMode from '../../containers/turbo-mode.jsx';
 import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
 
-import CompatibilityMode from '../../containers/tw-compatibility-mode.jsx';
+import SixtyFPSToggler from '../../containers/tw-sixty-fps-toggler.jsx';
 import HighQualityPen from '../../containers/tw-high-quality-pen.jsx';
-import ToggleCompiler from '../../containers/tw-toggle-compiler.jsx';
 import ChangeUsername from '../../containers/tw-change-username.jsx';
-import CloudVariablesToggler from '../../containers/tw-cloud.jsx';
-import ToggleStuck from '../../containers/tw-toggle-stuck.jsx';
+import CloudVariablesToggler from '../../containers/tw-cloud-toggler.jsx';
+import CompilerOptions from '../../containers/tw-compiler-options.jsx';
+import TWSaveStatus from './tw-save-status.jsx';
 
 import {openTipsLibrary} from '../../reducers/modals';
 import {setPlayer} from '../../reducers/mode';
@@ -58,9 +58,9 @@ import {
     openSettingsMenu,
     closeSettingMenu,
     settingsMenuOpen,
-    openLinksMenu,
-    closeLinksMenu,
-    linksMenuOpen,
+    openHelpMenu,
+    closeHelpMenu,
+    helpMenuOpen,
     openLanguageMenu,
     closeLanguageMenu,
     languageMenuOpen,
@@ -100,9 +100,11 @@ const ariaMessages = defineMessages({
     }
 });
 
-const openSourceCodeLink = () => window.open('https://github.com/TurboWarp', '_blank');
-const openPrivacyLink = () => window.open('/privacy.html', '_blank');
-const openAdvancedHelp = () => window.open('https://github.com/TurboWarp/scratch-gui/wiki/Advanced-Settings', '_blank');
+const openSourceCodeLink = () => window.open('https://github.com/TurboWarp', '_blank', 'noopener');
+const openFeedbackLink = () => window.open('https://scratch.mit.edu/users/GarboMuffin/#comments', '_blank', 'noopener');
+const openPrivacyLink = () => window.open('/privacy.html', '_blank', 'noopener');
+const openEmbedLink = () => window.open('https://github.com/TurboWarp/scratch-gui/wiki/Embedding', '_blank', 'noopener');
+const constURLParemetersLink = () => window.open('https://github.com/TurboWarp/scratch-gui/wiki/URL-Parameters', '_blank', 'noopener');
 
 const MenuBarItemTooltip = ({
     children,
@@ -356,17 +358,19 @@ class MenuBar extends React.Component {
             >
                 <div className={styles.mainMenu}>
                     <div className={styles.fileGroup}>
-                        <div className={classNames(styles.menuBarItem)}>
-                            <img
-                                alt="Scratch"
-                                className={classNames(styles.scratchLogo, {
-                                    [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
-                                })}
-                                draggable={false}
-                                src={this.props.logo}
-                                onClick={this.props.onClickLogo}
-                            />
-                        </div>
+                        {this.props.onClickLogo ? (
+                            <div className={classNames(styles.menuBarItem)}>
+                                <img
+                                    alt="Scratch"
+                                    className={classNames(styles.scratchLogo, {
+                                        [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
+                                    })}
+                                    draggable={false}
+                                    src={this.props.logo}
+                                    onClick={this.props.onClickLogo}
+                                />
+                            </div>
+                        ) : null}
                         {(this.props.canChangeLanguage) && (<div
                             className={classNames(styles.menuBarItem, styles.hoverable, styles.languageMenu)}
                         >
@@ -479,14 +483,16 @@ class MenuBar extends React.Component {
                                 place={this.props.isRtl ? 'left' : 'right'}
                                 onRequestClose={this.props.onRequestCloseEdit}
                             >
-                                <DeletionRestorer>{(handleRestore, {restorable, deletedItem}) => (
-                                    <MenuItem
-                                        className={classNames({[styles.disabled]: !restorable})}
-                                        onClick={this.handleRestoreOption(handleRestore)}
-                                    >
-                                        {this.restoreOptionMessage(deletedItem)}
-                                    </MenuItem>
-                                )}</DeletionRestorer>
+                                {this.props.isPlayerOnly ? null : (
+                                    <DeletionRestorer>{(handleRestore, {restorable, deletedItem}) => (
+                                        <MenuItem
+                                            className={classNames({[styles.disabled]: !restorable})}
+                                            onClick={this.handleRestoreOption(handleRestore)}
+                                        >
+                                            {this.restoreOptionMessage(deletedItem)}
+                                        </MenuItem>
+                                    )}</DeletionRestorer>
+                                )}
                                 <MenuSection>
                                     <TurboMode>{(toggleTurboMode, {turboMode}) => (
                                         <MenuItem onClick={toggleTurboMode}>
@@ -505,35 +511,60 @@ class MenuBar extends React.Component {
                                             )}
                                         </MenuItem>
                                     )}</TurboMode>
-                                    <CompatibilityMode>{(toggleCompatibilityMode, {compatibilityMode}) => (
-                                        <MenuItem onClick={toggleCompatibilityMode}>
-                                            {compatibilityMode ? (
+                                    <SixtyFPSToggler>{(toggleSixtyFPS, {isSixty}) => (
+                                        <MenuItem onClick={toggleSixtyFPS}>
+                                            {isSixty ? (
                                                 <FormattedMessage
-                                                    defaultMessage="Turn on 60 FPS mode"
-                                                    description="Menu bar item for turning on compatibility mode"
-                                                    id="tw.settings.compatOn"
+                                                    defaultMessage="Turn off 60 FPS mode"
+                                                    description="Menu bar item for turning off 60 FPS mode"
+                                                    id="tw.menuBar.60off"
                                                 />
                                             ) : (
                                                 <FormattedMessage
-                                                    defaultMessage="Turn off 60 FPS mode"
-                                                    description="Menu bar item for turning off compatibility mode"
-                                                    id="tw.settings.compatOff"
+                                                    defaultMessage="Turn on 60 FPS mode"
+                                                    description="Menu bar item for turning on 60 FPS mode"
+                                                    id="tw.menuBar.60on"
                                                 />
                                             )}
                                         </MenuItem>
-                                    )}</CompatibilityMode>
-                                    <ChangeUsername>{(changeUsername, {isProjectRunning}) => (
-                                        <MenuItem
-                                            className={classNames({[styles.disabled]: isProjectRunning})}
-                                            onClick={changeUsername}
-                                        >
+                                    )}</SixtyFPSToggler>
+                                    <ChangeUsername>{changeUsername => (
+                                        <MenuItem onClick={changeUsername}>
                                             <FormattedMessage
                                                 defaultMessage="Change Username"
                                                 description="Menu bar item for changing the username"
-                                                id="tw.settings.changeUsername"
+                                                id="tw.menuBar.changeUsername"
                                             />
                                         </MenuItem>
                                     )}</ChangeUsername>
+                                    <CloudVariablesToggler>{(toggleCloudVariables, {enabled, canUseCloudVariables}) => (
+                                        <MenuItem
+                                            className={classNames({[styles.disabled]: !canUseCloudVariables})}
+                                            onClick={toggleCloudVariables}
+                                        >
+                                            {canUseCloudVariables ? (
+                                                enabled ? (
+                                                    <FormattedMessage
+                                                        defaultMessage="Disable Cloud Variables"
+                                                        description="Menu bar item for disabling cloud variables"
+                                                        id="tw.menuBar.cloudOff"
+                                                    />
+                                                ) : (
+                                                    <FormattedMessage
+                                                        defaultMessage="Enable Cloud Variables"
+                                                        description="Menu bar item for enabling cloud variables"
+                                                        id="tw.menuBar.cloudOn"
+                                                    />
+                                                )
+                                            ) : (
+                                                <FormattedMessage
+                                                    defaultMessage="Cloud Variables are not Available"
+                                                    description="Menu bar item for when cloud variables are not available"
+                                                    id="tw.menuBar.cloudUnavailable"
+                                                />
+                                            )}
+                                        </MenuItem>
+                                    )}</CloudVariablesToggler>
                                 </MenuSection>
                             </MenuBarMenu>
                         </div>
@@ -549,7 +580,7 @@ class MenuBar extends React.Component {
                                 <FormattedMessage
                                     defaultMessage="Advanced"
                                     description="Text for advanced settings dropdown menu"
-                                    id="tw.settings.advanced"
+                                    id="tw.menuBar.advanced"
                                 />
                             </div>
                             <MenuBarMenu
@@ -559,127 +590,113 @@ class MenuBar extends React.Component {
                                 onRequestClose={this.props.onRequestCloseSettings}
                             >
                                 <MenuSection>
-                                    <MenuItem onClick={openAdvancedHelp}>
-                                        <FormattedMessage
-                                            defaultMessage="Advanced Settings Help"
-                                            description=""
-                                            id="tw.settings.advancedHelp"
-                                        />
-                                    </MenuItem>
                                     <HighQualityPen>{(toggleHighQualityPen, {highQualityPen}) => (
                                         <MenuItem onClick={toggleHighQualityPen}>
                                             {highQualityPen ? (
                                                 <FormattedMessage
                                                     defaultMessage="Turn off High Quality Pen"
                                                     description="Menu bar item for turning off high quality pen"
-                                                    id="tw.settings.hqpOff"
+                                                    id="tw.menuBar.hqpOff"
                                                 />
                                             ) : (
                                                 <FormattedMessage
                                                     defaultMessage="Turn on High Quality Pen"
                                                     description="Menu bar item for turning on high quality pen"
-                                                    id="tw.settings.hqpOn"
+                                                    id="tw.menuBar.hqpOn"
                                                 />
                                             )}
                                         </MenuItem>
                                     )}</HighQualityPen>
-                                    <CloudVariablesToggler>{(toggleCloudVariables, {cloud, canUseCloudVariables}) => (
-                                        <MenuItem
-                                            className={classNames({[styles.disabled]: !canUseCloudVariables})}
-                                            onClick={toggleCloudVariables}
-                                        >
-                                            {canUseCloudVariables ? (
-                                                cloud ? (
+                                    <CompilerOptions>{({toggleEnabled, toggleWarpTimer, compilerOptions}) => (
+                                        <React.Fragment>
+                                            <MenuItem onClick={toggleEnabled}>
+                                                {compilerOptions.enabled ? (
                                                     <FormattedMessage
-                                                        defaultMessage="Disable Cloud Variables"
-                                                        description="Menu bar item for disabling cloud variables"
-                                                        id="tw.settings.cloudOff"
+                                                        defaultMessage="Disable Compiler"
+                                                        description="Menu bar item for disabling the compiler"
+                                                        id="tw.menuBar.compilerOff"
                                                     />
                                                 ) : (
                                                     <FormattedMessage
-                                                        defaultMessage="Enable Cloud Variables"
-                                                        description="Menu bar item for enabling cloud variables"
-                                                        id="tw.settings.cloudOn"
+                                                        defaultMessage="Enable Compiler"
+                                                        description="Menu bar item for enabling the compiler"
+                                                        id="tw.menuBar.compilerOn"
                                                     />
-                                                )
-                                            ) : (
-                                                <FormattedMessage
-                                                    defaultMessage="Cloud Variables are not Available"
-                                                    description="Menu bar item for when cloud variables are not available"
-                                                    id="tw.settings.cloudUnavailable"
-                                                />
-                                            )}
-                                        </MenuItem>
-                                    )}</CloudVariablesToggler>
-                                    <ToggleCompiler>{(toggleCompiler, {compilerEnabled}) => (
-                                        <MenuItem onClick={toggleCompiler}>
-                                            {compilerEnabled ? (
-                                                <FormattedMessage
-                                                    defaultMessage="Disable Compiler"
-                                                    description="Menu bar item for disabling the compiler"
-                                                    id="tw.settings.compilerOff"
-                                                />
-                                            ) : (
-                                                <FormattedMessage
-                                                    defaultMessage="Enable Compiler"
-                                                    description="Menu bar item for enabling the compiler"
-                                                    id="tw.settings.compilerOn"
-                                                />
-                                            )}
-                                        </MenuItem>
-                                    )}</ToggleCompiler>
-                                    <ToggleStuck>{(toggleStuck, stuck) => (
-                                        <MenuItem onClick={toggleStuck}>
-                                            {stuck ? (
-                                                <FormattedMessage
-                                                    defaultMessage="Turn off Stuck Checking"
-                                                    description="Menu bar item for turning off stuck checking"
-                                                    id="tw.settings.stuckOff"
-                                                />
-                                            ) : (
-                                                <FormattedMessage
-                                                    defaultMessage="Turn on Stuck Checking"
-                                                    description="Menu bar item for turning on stuck checking"
-                                                    id="tw.settings.stuckOn"
-                                                />
-                                            )}
-                                        </MenuItem>
-                                    )}</ToggleStuck>
+                                                )}
+                                            </MenuItem>
+                                            <MenuItem onClick={toggleWarpTimer}>
+                                                {compilerOptions.warpTimer ? (
+                                                    <FormattedMessage
+                                                        defaultMessage="Turn off Warp Timer (Stuck Checking)"
+                                                        description="Menu bar item for turning off Warp Timer"
+                                                        id="tw.menuBar.warpTimerOff"
+                                                    />
+                                                ) : (
+                                                    <FormattedMessage
+                                                        defaultMessage="Turn on Warp Timer (Stuck Checking)"
+                                                        description="Menu bar item for turning on Warp Timer"
+                                                        id="tw.menuBar.warpTimerOn"
+                                                    />
+                                                )}
+                                            </MenuItem>
+                                        </React.Fragment>
+                                    )}</CompilerOptions>
                                 </MenuSection>
                             </MenuBarMenu>
                         </div>
                         <div
                             className={classNames(styles.menuBarItem, styles.hoverable, {
-                                [styles.active]: this.props.linksMenuOpen
+                                [styles.active]: this.props.helpMenuOpen
                             })}
-                            onMouseUp={this.props.onClickLinks}
+                            onMouseUp={this.props.onClickHelp}
                         >
-                            <div className={classNames(styles.linksMenu)}>
+                            <div className={classNames(styles.helpMenu)}>
                                 <FormattedMessage
-                                    defaultMessage="Links"
-                                    description="Text for TurboWarp Links dropdown menu"
-                                    id="tw.links"
+                                    defaultMessage="Help"
+                                    description="Text for TurboWarp Help dropdown menu"
+                                    id="tw.menuBar.help"
                                 />
                             </div>
                             <MenuBarMenu
                                 className={classNames(styles.menuBarMenu)}
-                                open={this.props.linksMenuOpen}
+                                open={this.props.helpMenuOpen}
                                 place={this.props.isRtl ? 'left' : 'right'}
-                                onRequestClose={this.props.onRequestCloseLinks}
+                                onRequestClose={this.props.onRequestCloseHelp}
                             >
                                 <MenuSection>
                                     <MenuItem onClick={openSourceCodeLink}>
                                         <FormattedMessage
                                             defaultMessage="Source Code"
-                                            description="Text for Source Code in the Links dropdown"
-                                            id="tw.links.code"
+                                            description="Text for source code link in the Help menu"
+                                            id="tw.menuBar.code"
+                                        />
+                                    </MenuItem>
+                                    <MenuItem onClick={openFeedbackLink}>
+                                        <FormattedMessage
+                                            defaultMessage="Feedback & Bugs"
+                                            description="Text for feedback link in the Help menu"
+                                            id="tw.menuBar.feedback"
                                         />
                                     </MenuItem>
                                     <MenuItem onClick={openPrivacyLink}>
                                         <FormattedMessage
                                             defaultMessage="Privacy"
-                                            description="Text for privacy policy in the Links dropdown"
-                                            id="tw.links.privacy"
+                                            description="Text for privacy policy link in the Help menu"
+                                            id="tw.menuBar.privacy"
+                                        />
+                                    </MenuItem>
+                                    <MenuItem onClick={openEmbedLink}>
+                                        <FormattedMessage
+                                            defaultMessage="Embedding"
+                                            description="Text for embedding link in the Help menu"
+                                            id="tw.menuBar.embed"
+                                        />
+                                    </MenuItem>
+                                    <MenuItem onClick={constURLParemetersLink}>
+                                        <FormattedMessage
+                                            defaultMessage="URL Parameters"
+                                            description="Text for url parameters link in the Help menu"
+                                            id="tw.menuBar.parameters"
                                         />
                                     </MenuItem>
                                 </MenuSection>
@@ -702,6 +719,7 @@ class MenuBar extends React.Component {
                         <AuthorInfo
                             className={styles.authorInfo}
                             imageUrl={this.props.authorThumbnailUrl}
+                            projectId={this.props.projectId}
                             projectTitle={this.props.projectTitle}
                             userId={this.props.authorId}
                             username={this.props.authorUsername}
@@ -784,6 +802,12 @@ class MenuBar extends React.Component {
                     </div>
                 </div>
 
+                <div className={styles.accountInfoGroup}>
+                    <div className={styles.menuBarItem}>
+                        <TWSaveStatus />
+                    </div>
+                </div>
+
                 {aboutButton}
             </Box>
         );
@@ -812,6 +836,7 @@ MenuBar.propTypes = {
     enableCommunity: PropTypes.bool,
     fileMenuOpen: PropTypes.bool,
     intl: intlShape,
+    isPlayerOnly: PropTypes.bool,
     isRtl: PropTypes.bool,
     isShared: PropTypes.bool,
     isShowingProject: PropTypes.bool,
@@ -833,8 +858,8 @@ MenuBar.propTypes = {
     onClickSaveAsCopy: PropTypes.func,
     onClickSettings: PropTypes.func,
     onRequestCloseSettings: PropTypes.func,
-    onClickLinks: PropTypes.func,
-    onRequestCloseLinks: PropTypes.func,
+    onClickHelp: PropTypes.func,
+    onRequestCloseHelp: PropTypes.func,
     onLogOut: PropTypes.func,
     onOpenRegistration: PropTypes.func,
     onOpenTipLibrary: PropTypes.func,
@@ -847,11 +872,12 @@ MenuBar.propTypes = {
     onSeeCommunity: PropTypes.func,
     onShare: PropTypes.func,
     onToggleLoginOpen: PropTypes.func,
+    projectId: PropTypes.string,
     projectTitle: PropTypes.string,
     renderLogin: PropTypes.func,
     sessionExists: PropTypes.bool,
     settingsMenuOpen: PropTypes.bool,
-    linksMenuOpen: PropTypes.bool,
+    helpMenuOpen: PropTypes.bool,
     shouldSaveBeforeTransition: PropTypes.func,
     showComingSoon: PropTypes.bool,
     userOwnsProject: PropTypes.bool,
@@ -869,18 +895,22 @@ const mapStateToProps = (state, ownProps) => {
     const user = state.session && state.session.session && state.session.session.user;
     return {
         accountMenuOpen: accountMenuOpen(state),
+        authorThumbnailUrl: state.scratchGui.tw.author.thumbnail,
+        authorUsername: state.scratchGui.tw.author.username,
         fileMenuOpen: fileMenuOpen(state),
         editMenuOpen: editMenuOpen(state),
+        isPlayerOnly: state.scratchGui.mode.isPlayerOnly,
         isRtl: state.locales.isRtl,
         isUpdating: getIsUpdating(loadingState),
         isShowingProject: getIsShowingProject(loadingState),
         languageMenuOpen: languageMenuOpen(state),
         locale: state.locales.locale,
         loginMenuOpen: loginMenuOpen(state),
+        projectId: state.scratchGui.projectState.projectId,
         projectTitle: state.scratchGui.projectTitle,
         sessionExists: state.session && typeof state.session.session !== 'undefined',
         settingsMenuOpen: settingsMenuOpen(state),
-        linksMenuOpen: linksMenuOpen(state),
+        helpMenuOpen: helpMenuOpen(state),
         username: user ? user.username : null,
         userOwnsProject: ownProps.authorUsername && user &&
             (ownProps.authorUsername === user.username),
@@ -904,8 +934,8 @@ const mapDispatchToProps = dispatch => ({
     onRequestCloseLogin: () => dispatch(closeLoginMenu()),
     onClickSettings: () => dispatch(openSettingsMenu()),
     onRequestCloseSettings: () => dispatch(closeSettingMenu()),
-    onClickLinks: () => dispatch(openLinksMenu()),
-    onRequestCloseLinks: () => dispatch(closeLinksMenu()),
+    onClickHelp: () => dispatch(openHelpMenu()),
+    onRequestCloseHelp: () => dispatch(closeHelpMenu()),
     onClickNew: needSave => dispatch(requestNewProject(needSave)),
     onClickRemix: () => dispatch(remixProject()),
     onClickSave: () => dispatch(manualUpdateProject()),

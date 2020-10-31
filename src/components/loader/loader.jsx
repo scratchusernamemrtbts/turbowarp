@@ -3,102 +3,21 @@ import {FormattedMessage} from 'react-intl';
 import classNames from 'classnames';
 import styles from './loader.css';
 import PropTypes from 'prop-types';
+import bindAll from 'lodash.bindall';
 
 import topBlock from './top-block.svg';
 import middleBlock from './middle-block.svg';
 import bottomBlock from './bottom-block.svg';
-const messages = [
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Creating blocks …"
-                description="One of the loading messages"
-                id="gui.loader.message1"
-            />
-        ),
-        weight: 50
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Loading sprites …"
-                description="One of the loading messages"
-                id="gui.loader.message2"
-            />
-        ),
-        weight: 50
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Loading sounds …"
-                description="One of the loading messages"
-                id="gui.loader.message3"
-            />
-        ),
-        weight: 50
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Loading extensions …"
-                description="One of the loading messages"
-                id="gui.loader.message4"
-            />
-        ),
-        weight: 50
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Creating blocks …"
-                description="One of the loading messages"
-                id="gui.loader.message1"
-            />
-        ),
-        weight: 20
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Herding cats …"
-                description="One of the loading messages"
-                id="gui.loader.message5"
-            />
-        ),
-        weight: 1
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Transmitting nanos …"
-                description="One of the loading messages"
-                id="gui.loader.message6"
-            />
-        ),
-        weight: 1
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Inflating gobos …"
-                description="One of the loading messages"
-                id="gui.loader.message7"
-            />
-        ),
-        weight: 1
-    },
-    {
-        message: (
-            <FormattedMessage
-                defaultMessage="Preparing emojis …"
-                description="One of the loading messages"
-                id="gui.loader.message8"
-            />
-        ),
-        weight: 1
-    }
-];
+
+import * as progressMonitor from './tw-progress-monitor';
+
+// tw:
+// we make some rather large changes here:
+//  - remove random message, replaced with message dependent on what is actually being loaded
+//  - add a progress bar
+// The way of doing this is extremely unusual and weird compared to how things are typically done for performance.
+// This is because react updates are too performance crippling to handle the progress bar rapidly updating.
+
 const mainMessages = {
     'gui.loader.headline': (
         <FormattedMessage
@@ -119,31 +38,57 @@ const mainMessages = {
 class LoaderComponent extends React.Component {
     constructor (props) {
         super(props);
-        this.state = {
-            messageNumber: this.chooseRandomMessage()
-        };
+        this._state = 0;
+        this.progress = 0;
+        this.complete = 0;
+        this.total = 0;
+        bindAll(this, [
+            'barInnerRef',
+            'handleProgressChange',
+            'messageRef'
+        ]);
     }
     componentDidMount () {
-        // Start an interval to choose a new message every 5 seconds
-        this.intervalId = setInterval(() => {
-            this.setState({messageNumber: this.chooseRandomMessage()});
-        }, 5000);
+        progressMonitor.setProgressHandler(this.handleProgressChange);
+        this.update();
+    }
+    componentDidUpdate () {
+        this.update();
     }
     componentWillUnmount () {
-        clearInterval(this.intervalId);
+        progressMonitor.setProgressHandler(() => {});
     }
-    chooseRandomMessage () {
-        let messageNumber;
-        const sum = messages.reduce((acc, m) => acc + m.weight, 0);
-        let rand = sum * Math.random();
-        for (let i = 0; i < messages.length; i++) {
-            rand -= messages[i].weight;
-            if (rand <= 0) {
-                messageNumber = i;
-                break;
-            }
+    handleProgressChange (state, progress, complete, total) {
+        if (state !== this._state) {
+            this._state = state;
+            this.updateMessage();
         }
-        return messageNumber;
+        this.progress = progress;
+        this.complete = complete;
+        this.total = total;
+        this.update();
+    }
+    update () {
+        this.barInner.style.width = `${this.progress * 100}%`;
+        if (this._state === 2) {
+            this.updateMessage();
+        }
+    }
+    updateMessage () {
+        // TODO: support translations
+        if (this._state === 1) {
+            this.message.textContent = 'Loading project data …';
+        } else if (this.total > 0) {
+            this.message.textContent = `Loading assets (${this.complete}/${this.total}) …`;
+        } else {
+            this.message.textContent = `Loading assets …`;
+        }
+    }
+    barInnerRef (element) {
+        this.barInner = element;
+    }
+    messageRef (element) {
+        this.message = element;
     }
     render () {
         return (
@@ -173,17 +118,20 @@ class LoaderComponent extends React.Component {
                     <div className={styles.messageContainerOuter}>
                         <div
                             className={styles.messageContainerInner}
-                            style={{transform: `translate(0, -${this.state.messageNumber * 25}px)`}}
+                            ref={this.messageRef}
                         >
-                            {messages.map((m, i) => (
-                                <div
-                                    className={styles.message}
-                                    key={i}
-                                >
-                                    {m.message}
-                                </div>
-                            ))}
+                            <FormattedMessage
+                                defaultMessage="Loading project …"
+                                description="Default loading message"
+                                id="tw.loadingMessage"
+                            />
                         </div>
+                    </div>
+                    <div className={styles.twProgressOuter}>
+                        <div
+                            className={styles.twProgressInner}
+                            ref={this.barInnerRef}
+                        />
                     </div>
                 </div>
             </div>
