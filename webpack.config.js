@@ -19,20 +19,26 @@ if (root.length > 0 && !root.endsWith('/')) {
 }
 
 const htmlWebpackPluginCommon = {
-    plausible: process.env.PLAUSIBLE_HOST ? {
-        host: process.env.PLAUSIBLE_HOST,
-        domain: process.env.PLAUSIBLE_DOMAIN
-    } : null,
     root: root
 };
 
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-    devtool: process.env.NODE_ENV === 'production' ? false : 'cheap-module-source-map',
+    devtool: process.env.SOURCEMAP ? process.env.SOURCEMAP : process.env.NODE_ENV === 'production' ? false : 'cheap-module-source-map',
     devServer: {
         contentBase: path.resolve(__dirname, 'build'),
         host: '0.0.0.0',
-        port: process.env.PORT || 8601
+        port: process.env.PORT || 8601,
+        // allows ROUTING_STYLE=wildcard to work properly
+        historyApiFallback: {
+            rewrites: [
+                {from: /^\/\d+\/?$/, to: '/index.html'},
+                {from: /^\/\d+\/fullscreen\/?$/, to: '/fullscreen.html'},
+                {from: /^\/\d+\/editor\/?$/, to: '/editor.html'},
+                {from: /^\/\d+\/embed\/?$/, to: '/embed.html'},
+                {from: /^\/addons\/?$/, to: '/addons.html'}
+            ]
+        }
     },
     output: {
         library: 'GUI',
@@ -40,12 +46,12 @@ const base = {
         chunkFilename: process.env.NODE_ENV === 'production' ? 'js/[name].[contenthash].js' : 'js/[name].js',
         publicPath: root
     },
-    externals: {
-        React: 'react',
-        ReactDOM: 'react-dom'
-    },
     resolve: {
-        symlinks: false
+        symlinks: false,
+        alias: {
+            'text-encoding$': path.resolve(__dirname, 'src/lib/tw-text-encoder'),
+            'scratch-render-fonts$': path.resolve(__dirname, 'src/lib/tw-scratch-render-fonts')
+        }
     },
     module: {
         rules: [{
@@ -62,9 +68,6 @@ const base = {
                 // in much lower dependencies.
                 babelrc: false,
                 plugins: [
-                    '@babel/plugin-syntax-dynamic-import',
-                    '@babel/plugin-transform-async-to-generator',
-                    '@babel/plugin-proposal-object-rest-spread',
                     ['react-intl', {
                         messagesDir: './translations/messages/'
                     }]],
@@ -109,22 +112,20 @@ module.exports = [
     // to run editor examples
     defaultsDeep({}, base, {
         entry: {
-            editor: './src/playground/editor.jsx',
-            player: './src/playground/player.jsx',
-            fullscreen: './src/playground/fullscreen.jsx',
-            embed: './src/playground/embed.jsx'
+            'editor': './src/playground/editor.jsx',
+            'player': './src/playground/player.jsx',
+            'fullscreen': './src/playground/fullscreen.jsx',
+            'embed': './src/playground/embed.jsx',
+            'addon-settings': './src/playground/addon-settings.jsx',
+            'credits': './src/playground/credits/credits.jsx'
         },
         output: {
             path: path.resolve(__dirname, 'build')
         },
-        externals: {
-            React: 'react',
-            ReactDOM: 'react-dom'
-        },
         module: {
             rules: base.module.rules.concat([
                 {
-                    test: /\.(svg|png|wav|gif|jpg|mp3)$/,
+                    test: /\.(svg|png|wav|gif|jpg|mp3|ttf|otf)$/,
                     loader: 'file-loader',
                     options: {
                         outputPath: 'static/assets/'
@@ -135,27 +136,26 @@ module.exports = [
         optimization: {
             splitChunks: {
                 chunks: 'all',
-                minChunks: 2
-            },
-            runtimeChunk: {
-                name: 'runtime'
+                minChunks: 2,
+                minSize: 50000,
+                maxInitialRequests: 5
             }
         },
         plugins: base.plugins.concat([
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': '"' + process.env.NODE_ENV + '"',
                 'process.env.DEBUG': Boolean(process.env.DEBUG),
-                'process.env.ANNOUNCEMENT': process.env.ANNOUNCEMENT ? '"' + process.env.ANNOUNCEMENT + '"' : '""',
+                'process.env.ANNOUNCEMENT': JSON.stringify(process.env.ANNOUNCEMENT || ''),
                 'process.env.ROOT': JSON.stringify(root),
                 'process.env.ROUTING_STYLE': JSON.stringify(process.env.ROUTING_STYLE || 'filehash'),
-                'process.env.PLAUSIBLE_HOST': JSON.stringify(process.env.PLAUSIBLE_HOST),
+                'process.env.PLAUSIBLE_API': JSON.stringify(process.env.PLAUSIBLE_API),
                 'process.env.PLAUSIBLE_DOMAIN': JSON.stringify(process.env.PLAUSIBLE_DOMAIN)
             }),
             new HtmlWebpackPlugin({
                 chunks: ['editor'],
                 template: 'src/playground/index.ejs',
                 filename: 'editor.html',
-                title: 'TurboWarp Editor',
+                title: 'TurboWarp - Run Scratch projects faster',
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
@@ -169,24 +169,35 @@ module.exports = [
                 chunks: ['fullscreen'],
                 template: 'src/playground/index.ejs',
                 filename: 'fullscreen.html',
-                title: 'TurboWarp',
+                title: 'TurboWarp - Run Scratch projects faster',
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
                 chunks: ['embed'],
                 template: 'src/playground/index.ejs',
                 filename: 'embed.html',
-                title: 'TurboWarp',
+                title: 'Embedded Project - TurboWarp',
+                noTheme: true,
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
-                chunks: [],
-                template: 'src/playground/privacy.html',
-                filename: 'privacy.html'
+                chunks: ['addon-settings'],
+                template: 'src/playground/simple.ejs',
+                filename: 'addons.html',
+                title: 'Addon Settings - TurboWarp',
+                ...htmlWebpackPluginCommon
+            }),
+            new HtmlWebpackPlugin({
+                chunks: ['credits'],
+                template: 'src/playground/simple.ejs',
+                filename: 'credits.html',
+                title: 'TurboWarp Credits',
+                noSplash: true,
+                ...htmlWebpackPluginCommon
             }),
             new CopyWebpackPlugin([{
                 from: 'static',
-                to: 'static'
+                to: ''
             }]),
             new CopyWebpackPlugin([{
                 from: 'node_modules/scratch-blocks/media',
@@ -218,13 +229,13 @@ module.exports = [
                 publicPath: `${STATIC_PATH}/`
             },
             externals: {
-                React: 'react',
-                ReactDOM: 'react-dom'
+                'react': 'react',
+                'react-dom': 'react-dom'
             },
             module: {
                 rules: base.module.rules.concat([
                     {
-                        test: /\.(svg|png|wav|gif|jpg|mp3)$/,
+                        test: /\.(svg|png|wav|gif|jpg|mp3|ttf|otf)$/,
                         loader: 'file-loader',
                         options: {
                             outputPath: 'static/assets/',

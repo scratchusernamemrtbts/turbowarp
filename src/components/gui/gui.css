@@ -30,7 +30,7 @@
         Stop scrollbar popping in and out from scratch-blocks border issue
         https://github.com/LLK/scratch-gui/issues/318
     */
-    overflow-y: hidden;
+    overflow: hidden;
 }
 
 .editor-wrapper {
@@ -90,6 +90,9 @@
     user-select: none;
     white-space: nowrap;
 }
+[theme="dark"] .tab {
+    color: $text-primary;
+}
 
 [dir="ltr"] .tab {
     margin-left: -0.5rem;
@@ -121,12 +124,18 @@
 .tab:hover {
   background-color: $ui-primary;
 }
+[theme="dark"] .tab:hover {
+    background-color: $ui-secondary;
+}
 
 .tab.is-selected {
     height: 90%;
     color: $motion-primary;
     background-color: $ui-white;
     z-index: 4; /* Make sure selected is always above */
+}
+[theme="dark"] .tab.is-selected {
+    background-color: $ui-secondary;
 }
 
 .tab img {
@@ -316,4 +325,14 @@ $fade-out-distance: 15px;
 */
 :global(.ReactModal__Body--open) {
     overflow: hidden;
+}
+
+/* tw: tw: when window is fullscreen, put a solid white background behind the stage */
+.fullscreen-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
 }

@@ -188,4 +188,17 @@ describe('CloudProvider', () => {
         cloudProvider.requestCloseConnection();
         expect(websocketConstructorCount).toBe(1); // No reconnection attempts
     });
+
+    test('close with code 4002 triggers invalid username', () => {
+        cloudProvider.onInvalidUsername = jest.fn();
+        cloudProvider.onClose({code: 4002});
+        expect(cloudProvider.onInvalidUsername).toHaveBeenCalledTimes(1);
+    });
+
+    test('close with normal code does not trigger invalid username', () => {
+        cloudProvider.username = 'aaa';
+        cloudProvider.onInvalidUsername = jest.fn();
+        cloudProvider.onClose({code: 1000});
+        expect(cloudProvider.onInvalidUsername).not.toHaveBeenCalled();
+    });
 });

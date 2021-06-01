@@ -129,7 +129,7 @@ const alerts = [
         clearList: ['createSuccess', 'creating', 'createCopySuccess', 'creatingCopy',
             'createRemixSuccess', 'creatingRemix', 'saveSuccess', 'saving'],
         showDownload: true,
-        showSaveNow: true,
+        // showSaveNow: true,
         closeButton: false,
         content: (
             <FormattedMessage
@@ -143,7 +143,7 @@ const alerts = [
     {
         alertId: 'saveSuccess',
         alertType: AlertTypes.INLINE,
-        clearList: ['saveSuccess', 'saving', 'savingError'],
+        clearList: ['saveSuccess', 'saving', 'savingError', 'twSaveToDiskSuccess'],
         content: (
             <FormattedMessage
                 defaultMessage="Project saved."
@@ -156,14 +156,42 @@ const alerts = [
         maxDisplaySecs: 3
     },
     {
+        alertId: 'twSaveToDiskSuccess',
+        alertType: AlertTypes.INLINE,
+        clearList: ['saveSuccess', 'saving', 'savingError', 'twSaveToDiskSuccess'],
+        content: (
+            <FormattedMessage
+                defaultMessage="Saved to your computer."
+                description="Message indicating that project was successfully saved to the user's disk"
+                id="tw.alerts.savedToDisk"
+            />
+        ),
+        iconURL: successImage,
+        level: AlertLevels.SUCCESS,
+        maxDisplaySecs: 3
+    },
+    {
         alertId: 'saving',
         alertType: AlertTypes.INLINE,
-        clearList: ['saveSuccess', 'saving', 'savingError'],
+        clearList: ['saveSuccess', 'saving', 'savingError', 'twSaveToDiskSuccess'],
         content: (
             <FormattedMessage
                 defaultMessage="Saving project…"
                 description="Message indicating that project is in process of saving"
                 id="gui.alerts.saving"
+            />
+        ),
+        iconSpinner: true,
+        level: AlertLevels.INFO
+    },
+    {
+        alertId: 'twAutosaving',
+        alertType: AlertTypes.INLINE,
+        content: (
+            <FormattedMessage
+                defaultMessage="Creating restore point…"
+                description="Message indicating that a restore point is being created"
+                id="tw.alerts.autosaving"
             />
         ),
         iconSpinner: true,
@@ -216,12 +244,53 @@ const alerts = [
     {
         alertId: 'twWarning',
         alertType: AlertTypes.STANDARD,
-        clearList: [],
+        content: (
+            <center>
+                <div style={{marginBottom: '3px'}}>
+                    <FormattedMessage
+                        // eslint-disable-next-line max-len
+                        defaultMessage="Remember to save your project often. In the event of a crash, you can try to load an automatic backup with File > Load Restore Point, but you shouldn't rely on this."
+                        description="Warning that appears when the editor is opened"
+                        id="tw.editorWarning.1"
+                    />
+                </div>
+                <div>
+                    <FormattedMessage
+                        // eslint-disable-next-line max-len
+                        defaultMessage="Warp Timer has been enabled because you opened the editor, which may reduce performance. See Advanced for more options."
+                        description="Warning that appears when the editor is opened"
+                        id="tw.editorWarning.2"
+                    />
+                </div>
+            </center>
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN
+    },
+    {
+        alertId: 'twExtendedExtensionsWarning',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['twExtendedExtensionsWarning'],
         content: (
             <FormattedMessage
-                defaultMessage="Turn on Warp Timer or disable compiler (in Advanced menu) while creating projects to avoid potential data loss. Also note that scripts may need to be restarted for changes to apply."
-                description="Message warning user of potential data loss."
-                id="tw.alerts.warning"
+                defaultMessage="This project uses blocks exclusive to TurboWarp. It will not work in Scratch and should not be uploaded to the Scratch website. {learnMoreLink}"
+                description="Warning that this project uses blocks that will only work in TurboWarp"
+                id="tw.alerts.extendedExtensionsWarning"
+                values={{
+                    learnMoreLink: (
+                        <a
+                            href="https://github.com/TurboWarp/scratch-gui/wiki/TurboWarp-blocks"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                        >
+                            <FormattedMessage
+                                defaultMessage="Learn more."
+                                description="Link text to TurboWarp-exclusive blocks FAQ"
+                                id="tw.alerts.extendedExtensionsWarning.learnMoreLink"
+                            />
+                        </a>
+                    )
+                }}
             />
         ),
         closeButton: true,

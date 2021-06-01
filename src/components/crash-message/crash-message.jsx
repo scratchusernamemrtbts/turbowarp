@@ -13,13 +13,13 @@ const CrashMessage = props => (
                 className={styles.reloadIcon}
                 src={reloadIcon}
             />
-            <h2>
+            <p className={styles.header}>
                 <FormattedMessage
                     defaultMessage="Oops! Something went wrong."
                     description="Crash Message title"
                     id="gui.crashMessage.label"
                 />
-            </h2>
+            </p>
             <p>
                 <FormattedMessage
                     defaultMessage={'We are so sorry, but it looks like TurboWarp has crashed.' +
@@ -29,6 +29,11 @@ const CrashMessage = props => (
                     id="tw.gui.crashMessage.description"
                 />
             </p>
+            {props.errorMessage && (
+                <p className={styles.errorMessage}>
+                    {props.errorMessage}
+                </p>
+            )}
             {props.eventId && (
                 <p>
                     <FormattedMessage
@@ -57,6 +62,7 @@ const CrashMessage = props => (
 
 CrashMessage.propTypes = {
     eventId: PropTypes.string,
+    errorMessage: PropTypes.string,
     onReload: PropTypes.func.isRequired
 };
 

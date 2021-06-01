@@ -2603,6 +2603,18 @@
         "rotationCenterY": 200
     },
     {
+        "name": "Dango",
+        "tags": [
+            "food"
+        ],
+        "assetId": "b4ab6b3b69de1bc3ed6a94ace172a0b0",
+        "bitmapResolution": 1,
+        "dataFormat": "svg",
+        "md5ext": "b4ab6b3b69de1bc3ed6a94ace172a0b0.svg",
+        "rotationCenterX": 44,
+        "rotationCenterY": 44
+    },
+    {
         "name": "Dani-a",
         "tags": [
             "people"
@@ -7213,19 +7225,6 @@
         "md5ext": "bd0581902cd6cc13888520776bf1620c.svg",
         "rotationCenterX": 85,
         "rotationCenterY": 48
-    },
-    {
-        "name": "Neigh Pony",
-        "tags": [
-            "animals",
-            "fantasy"
-        ],
-        "assetId": "592816f56409d582603c485cbefcbbb8",
-        "bitmapResolution": 1,
-        "dataFormat": "svg",
-        "md5ext": "592816f56409d582603c485cbefcbbb8.svg",
-        "rotationCenterX": 74,
-        "rotationCenterY": 78
     },
     {
         "name": "Noor-a",

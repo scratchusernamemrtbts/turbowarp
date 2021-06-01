@@ -1,10 +1,8 @@
 import {addLocaleData} from 'react-intl';
 
-import {localeData} from 'scratch-l10n';
-import editorMessages from 'scratch-l10n/locales/editor-msgs';
-import {isRtl} from 'scratch-l10n';
+import {localeData, isRtl} from '@turbowarp/scratch-l10n';
+import editorMessages from '@turbowarp/scratch-l10n/locales/editor-msgs';
 
-// tw: store language in localStorage
 import {LANGUAGE_KEY} from '../lib/detect-locale.js';
 
 addLocaleData(localeData);

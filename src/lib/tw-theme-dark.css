@@ -1,0 +1,82 @@
+/* GUI */
+:root {
+    background: #111;
+    color: #eee;
+    /* see colors.csss */
+    --ui-primary: rgb(17, 17, 17);
+    --ui-secondary: rgb(30, 30, 30);
+    --ui-tertiary: rgb(46, 46, 46);
+    --ui-modal-overlay: #333a;
+    --text-primary: #eee;
+    /* scratch-paint */
+    --paint-ui-pane-border: rgb(46, 46, 46);
+    --paint-text-primary: #eee;
+    --paint-form-border: rgb(46, 46, 46);
+}
+
+/* Blockly */
+.blocklySvg {
+    background-color: var(--ui-secondary) !important;
+}
+[id^="blocklyGridPattern"] > line {
+    stroke: #484848;
+}
+.blocklyFlyoutBackground {
+    fill: #111;
+}
+.blocklyFlyoutLabelText {
+    fill: #ccc;
+}
+.blocklyFlyoutButton .blocklyText {
+    fill: #ccc;
+}
+.blocklyFlyoutButton:hover {
+    fill: #111;
+}
+.scratchCategoryMenu {
+    color: #ccc;
+}
+.blocklyToolboxDiv,
+.scratchCategoryMenu {
+    background: #111 !important;
+}
+.blocklyScrollbarHandle {
+    fill: #666;
+}
+.blocklyZoom {
+    filter: invert(100%);
+}
+.scratchCategoryMenuItem.categorySelected {
+    background: var(--ui-secondary);
+}
+.valueReportBox {
+    color: black;
+}
+.blocklyWidgetDiv .goog-menu {
+    background: var(--ui-primary);
+    border-color: hsla(0, 0%, 0%, 0.15);
+}
+.blocklyWidgetDiv .goog-menuitem {
+    color: var(--text-primary);
+}
+.blocklyWidgetDiv .goog-menuitem.goog-menuitem-highlight {
+    background-color: var(--ui-tertiary);
+    border-color: transparent; /* remove border */
+}
+.scratchCommentText {
+    color: black;
+}
+.blocklyInsertionMarker > .blocklyPath {
+    fill: #ccc;
+}
+
+/* Other / Multipurpose */
+.Popover-body {
+    background: var(--ui-secondary);
+    border-color: var(--ui-tertiary);
+    color: var(--text-primary);
+}
+.Popover-tipShape {
+    fill: var(--ui-secondary);
+    stroke: var(--ui-tertiary);
+}

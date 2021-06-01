@@ -14,9 +14,7 @@ const decorate = text => {
             href={`https://scratch.mit.edu/users/${match}/`}
             rel="noreferrer"
             key={match + i}
-        >
-            {`@${match}`}
-        </a>
+        >{`@${match}`}</a>
     ));
 
     // Make links clickable
@@ -26,9 +24,15 @@ const decorate = text => {
             href={match}
             rel="noreferrer"
             key={match + i}
-        >
-            {match}
-        </a>
+        >{match}</a>
+    ));
+
+    // Make hashtags clickable
+    text = reactStringReplace(text, /#([\w-]+)/g, (match, i) => (
+        <a
+            href={`https://scratch.mit.edu/search/projects?q=${match}`}
+            key={match + i}
+        >{`#${match}`}</a>
     ));
 
     return text;
@@ -36,42 +40,75 @@ const decorate = text => {
 
 const Description = ({
     instructions,
-    credits
+    credits,
+    projectId
 }) => (
     <div className={styles.description}>
-        {instructions ? (
+        {instructions === 'unshared' && credits === 'unshared' ? (
             <div>
-                <div className={styles.header}>
+                <a
+                    href="https://github.com/TurboWarp/scratch-gui/wiki/Unshared-Projects"
+                    target="_blank"
+                    rel="noreferrer"
+                >
                     <FormattedMessage
-                        defaultMessage="Instructions"
-                        description="Header for instructions section of description"
-                        id="tw.home.instructions"
+                        defaultMessage="Regarding unshared projects"
+                        description="Link to information about unshared projects in description"
+                        id="tw.regardingUnshared"
                     />
-                </div>
-                {decorate(instructions)}
+                </a>
             </div>
-        ) : null}
-        {instructions && credits ? (
-            <div className={styles.divider} />
-        ) : null}
-        {credits ? (
-            <div>
-                <div className={styles.header}>
-                    <FormattedMessage
-                        defaultMessage="Notes and Credits"
-                        description="Header for notes and credits section of description"
-                        id="tw.home.credit"
-                    />
+        ) : (
+            <React.Fragment>
+                <div className={styles.projectLink}>
+                    <a
+                        href={`https://scratch.mit.edu/projects/${projectId}/`}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <FormattedMessage
+                            defaultMessage="View project on Scratch"
+                            description="Link to view project on Scratch"
+                            id="tw.viewOnScratch"
+                        />
+                    </a>
                 </div>
-                {decorate(credits)}
-            </div>
-        ) : null}
+                {instructions ? (
+                    <div>
+                        <h2 className={styles.header}>
+                            <FormattedMessage
+                                defaultMessage="Instructions"
+                                description="Header for instructions section of description"
+                                id="tw.home.instructions"
+                            />
+                        </h2>
+                        {decorate(instructions)}
+                    </div>
+                ) : null}
+                {instructions && credits ? (
+                    <div className={styles.divider} />
+                ) : null}
+                {credits ? (
+                    <div>
+                        <h2 className={styles.header}>
+                            <FormattedMessage
+                                defaultMessage="Notes and Credits"
+                                description="Header for notes and credits section of description"
+                                id="tw.home.credit"
+                            />
+                        </h2>
+                        {decorate(credits)}
+                    </div>
+                ) : null}
+            </React.Fragment>
+        )}
     </div>
 );
 
 Description.propTypes = {
     instructions: PropTypes.string,
-    credits: PropTypes.string
+    credits: PropTypes.string,
+    projectId: PropTypes.string
 };
 
 export default Description;

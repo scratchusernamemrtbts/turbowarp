@@ -16,6 +16,10 @@
     transition: opacity 0.2s ease;
     z-index: $z-index-context-menu;
 }
+[theme="dark"] .context-menu {
+    background-color: $ui-primary;
+    border-color: $ui-tertiary;
+}
 
 .menu-item {
     padding: 8px 12px;
@@ -31,6 +35,9 @@
 
 .menu-item-bordered {
     border-top: 1px solid $ui-black-transparent;
+}
+[theme="dark"] .menu-item-bordered {
+    border-color: $ui-tertiary;
 }
 
 .menu-item-danger:hover {

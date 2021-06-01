@@ -1,0 +1,28 @@
+{
+  "name": "Colored context menus",
+  "description": "Makes the editor context menus colorful when right-clicking a block.",
+  "credits": [
+    {
+      "name": "GarboMuffin"
+    }
+  ],
+  "dynamicEnable": true,
+  "dynamicDisable": true,
+  "versionAdded": "1.0.0",
+  "injectAsStyleElt": true,
+  "userscripts": [
+    {
+      "url": "userscript.js",
+      "matches": ["https://scratch.mit.edu/projects/*"]
+    }
+  ],
+  "userstyles": [
+    {
+      "url": "userscript.css",
+      "matches": ["https://scratch.mit.edu/projects/*"]
+    }
+  ],
+  "tags": ["editor", "codeEditor", "theme"],
+  "enabledByDefault": false,
+  "l10n": true
+}

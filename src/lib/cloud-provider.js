@@ -42,7 +42,7 @@ class CloudProvider {
 
         try {
             // tw: only add ws:// or wss:// if it not already present in the cloudHost
-            if (!(this.cloudHost.includes('ws://') || this.cloudHost.includes('wss://'))) {
+            if (!this.cloudHost || (!this.cloudHost.includes('ws://') && !this.cloudHost.includes('wss://'))) {
                 this.cloudHost = (location.protocol === 'http:' ? 'ws://' : 'wss://') + this.cloudHost;
             }
             this.connection = new WebSocket(this.cloudHost);
@@ -91,18 +91,19 @@ class CloudProvider {
     }
 
     onClose (e) {
-        // tw: code 4002 is "Username Error". show a warning and don't try to reconnect
-        if (e.code === 4002) {
+        // tw: code 4002 is "Username Error" -- do not try to reconnect
+        if (e && e.code === 4002) {
             log.info('Cloud username is invalid. Not reconnecting.');
-            // todo: translate
-            // eslint-disable-next-line no-alert
-            alert(`Can't connect to cloud variable server because your username is invalid. You can change it in Edit > Change Username.\n\nIt might be too long, contain unsupported characters, or be used by someone else. (Current username: ${this.username})`);
+            this.onInvalidUsername();
             return;
         }
         log.info(`Closed connection to websocket`);
         const randomizedTimeout = this.randomizeDuration(this.exponentialTimeout());
         this.setTimeout(this.openConnection.bind(this), randomizedTimeout);
     }
+
+    // tw: method called when username is invalid
+    onInvalidUsername () { /* no-op */ }
 
     exponentialTimeout () {
         return (Math.pow(2, Math.min(this.connectionAttempts, 5)) - 1) * 1000;

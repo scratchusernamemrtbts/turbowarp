@@ -167,15 +167,20 @@ class Monitor extends React.Component {
         this.element = monitorElt;
     }
     handleImport () {
-        importCSV().then(rows => {
+        importCSV().then(({rows, text}) => {
             const numberOfColumns = rows[0].length;
             let columnNumber = 1;
             if (numberOfColumns > 1) {
                 const msg = this.props.intl.formatMessage(messages.columnPrompt, {numberOfColumns});
                 columnNumber = parseInt(prompt(msg), 10); // eslint-disable-line no-alert
             }
-            const newListValue = rows.map(row => row[columnNumber - 1])
-                .filter(item => typeof item === 'string'); // CSV importer can leave undefineds
+            let newListValue;
+            if (isNaN(columnNumber) || numberOfColumns === 1) {
+                newListValue = text.replace(/\r/g, '').split('\n');
+            } else {
+                newListValue = rows.map(row => row[columnNumber - 1])
+                    .filter(item => typeof item === 'string'); // CSV importer can leave undefineds
+            }
             const {vm, targetId, id: variableId} = this.props;
             setVariableValue(vm, targetId, variableId, newListValue);
         });
@@ -236,8 +241,8 @@ Monitor.propTypes = {
     min: PropTypes.number,
     mode: PropTypes.oneOf(['default', 'slider', 'large', 'list']),
     monitorLayout: PropTypes.shape({
-        monitors: PropTypes.object,
-        savedMonitorPositions: PropTypes.object
+        monitors: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+        savedMonitorPositions: PropTypes.object // eslint-disable-line react/forbid-prop-types
     }).isRequired,
     onDragEnd: PropTypes.func.isRequired,
     opcode: PropTypes.string.isRequired, // eslint-disable-line react/no-unused-prop-types

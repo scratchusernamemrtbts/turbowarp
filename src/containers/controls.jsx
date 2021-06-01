@@ -50,7 +50,7 @@ class Controls extends React.Component {
         return (
             <ControlsComponent
                 {...props}
-                active={projectRunning}
+                active={projectRunning && isStarted}
                 turbo={turbo}
                 onGreenFlagClick={this.handleGreenFlagClick}
                 onStopAllClick={this.handleStopAllClick}
@@ -64,13 +64,15 @@ Controls.propTypes = {
     projectRunning: PropTypes.bool.isRequired,
     turbo: PropTypes.bool.isRequired,
     framerate: PropTypes.number.isRequired,
+    interpolation: PropTypes.bool.isRequired,
     vm: PropTypes.instanceOf(VM)
 };
 
 const mapStateToProps = state => ({
-    isStarted: state.scratchGui.vmStatus.running,
+    isStarted: state.scratchGui.vmStatus.started,
     projectRunning: state.scratchGui.vmStatus.running,
     framerate: state.scratchGui.tw.framerate,
+    interpolation: state.scratchGui.tw.interpolation,
     turbo: state.scratchGui.vmStatus.turbo
 });
 // no-op function to prevent dispatch prop being passed to component

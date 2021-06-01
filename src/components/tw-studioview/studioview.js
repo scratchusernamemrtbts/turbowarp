@@ -9,32 +9,11 @@ import styles from './studioview.css';
 import classNames from 'classnames';
 
 /**
- * Determines if an element is visible, accounting for parents and their bounding rects.
- */
-function isElementVisible(el) {
-    // see https://stackoverflow.com/a/21627295
-    var rect = el.getBoundingClientRect();
-    var top = rect.top;
-    var height = rect.height;
-    var el = el.parentNode;
-
-    if (rect.bottom < 0) return false;
-    if (top > document.documentElement.clientHeight) return false;
-    do {
-        rect = el.getBoundingClientRect();
-        if (top <= rect.bottom === false) return false;
-        if ((top + height) <= rect.top) return false;
-        el = el.parentNode;
-    } while (el != document.body)
-    return true;
-}
-
-/**
  * @class
  */
 var StudioView = function (studioId) {
     this.studioId = studioId;
-    this.page = 1;
+    this.offset = 0;
     this.ended = false;
     this.loadingPage = false;
     this.unusedPlaceholders = [];
@@ -43,17 +22,26 @@ var StudioView = function (studioId) {
     this.root.className = styles.studioviewRoot;
     this.projectList = document.createElement('div');
     this.projectList.className = styles.studioviewList;
-    this.projectList.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
     this.root.appendChild(this.projectList);
 
     if ('IntersectionObserver' in window) {
         this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), {
-            root: this.projectList,
-            rootMargin: '25px 0px 25px 0px',
+            root: this.projectList
+        });
+        this.loadNextPageObserver = new IntersectionObserver(this.handleLoadNextPageIntersection.bind(this), {
+            root: this.projectList
         });
     } else {
         this.intersectionObserver = null;
+        this.loadNextPageObserver = null;
     }
+
+    // will be filled in by studioview.jsx
+    this.messages = {
+        AUTHOR_ATTRIBUTION: '',
+        PROJECT_HOVER_TEXT: '',
+        LOAD_ERROR: ''
+    };
 };
 
 /**
@@ -78,7 +66,6 @@ StudioView.prototype.createLazyImage = function (src) {
     var el = document.createElement('img');
     if (this.intersectionObserver) {
         this.intersectionObserver.observe(el);
-        el.className = styles.studioviewLazy;
         el.dataset.src = src;
     } else {
         // then we just won't lazy load it
@@ -122,7 +109,7 @@ StudioView.prototype.placeholderToProject = function (el, id, title, author) {
     el.dataset.id = id;
     el.dataset.title = title;
     el.dataset.author = author;
-    el.title = StudioView.PROJECT_HOVER_TEXT.replace('$author', author).replace('$title', title);
+    el.title = this.messages.PROJECT_HOVER_TEXT.replace('$author', author).replace('$title', title);
     el.href = StudioView.PROJECT_PAGE.replace('$id', id);
 
     var thumbnailSrc = StudioView.THUMBNAIL_SRC.replace('$id', id);
@@ -130,7 +117,7 @@ StudioView.prototype.placeholderToProject = function (el, id, title, author) {
     el.thumbnailEl.appendChild(thumbnailImg);
 
     el.titleEl.innerText = title;
-    el.authorEl.innerText = StudioView.AUTHOR_ATTRIBUTION.replace('$author', author);
+    el.authorEl.innerText = this.messages.AUTHOR_ATTRIBUTION.replace('$author', author);
 
     el.addEventListener('click', this.handleClick.bind(this), true);
     el.addEventListener('keydown', this.handleKeyDown.bind(this), true);
@@ -143,15 +130,17 @@ StudioView.prototype.placeholderToProject = function (el, id, title, author) {
  */
 StudioView.prototype.addErrorElement = function () {
     var el = document.createElement('div');
-    el.innerText = StudioView.LOAD_ERROR;
+    el.innerText = this.messages.LOAD_ERROR;
     el.className = styles.studioviewError;
     this.projectList.appendChild(el);
 };
 
-// Called when the project list is scrolled
-StudioView.prototype.handleScroll = function (e) {
-    if (this.canLoadNext() && isElementVisible(this.projectList.lastChild)) {
-        this.loadNextPage();
+StudioView.prototype.handleLoadNextPageIntersection = function (e) {
+    for (var i = 0; i < e.length; i++) {
+        var intersection = e[i];
+        if (intersection.isIntersecting && this.canLoadNext()) {
+            this.loadNextPage();
+        }
     }
 };
 
@@ -242,40 +231,27 @@ StudioView.prototype.loadNextPage = function () {
     if (this.unusedPlaceholders.length === 0) {
         this.addPlaceholders();
     }
+    if (this.loadNextPageObserver) {
+        this.loadNextPageObserver.disconnect();
+    }
     this.root.setAttribute('loading', '');
     this.loadingPage = true;
 
     var xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
     xhr.onload = function () {
-        // We cannot just set xhr.responseType="document" because the proxy returns text/plain
-        var docSource = xhr.response;
-        var doc = new DOMParser().parseFromString(docSource, 'text/html');
-
+        var rawProjects = xhr.response;
+        if (!Array.isArray(rawProjects)) {
+            xhr.onerror();
+            return;
+        }
         var projects = [];
-        var projectElements = doc.querySelectorAll('.project');
-        /*
-        Each project element should be:
-        <li class="project thumb item" data-id="12345">
-          <a href="/projects/12345/">
-            <img class="lazy image" data-original="//cdn2.scratch.mit.edu/get_image/project/12345_144x108.png" width="144" height="108" />
-          </a>
-          <span class="title">
-            <a href="/projects/12345/">Title</a>
-          </span>
-          <span class="owner" >
-            by <a href="/users/Author/">Author</a>
-          </span>
-        </li>
-        */
-        for (var i = 0; i < projectElements.length; i++) {
-            var project = projectElements[i];
-            var id = project.getAttribute('data-id');
-            var title = project.querySelector('.title').textContent.trim();
-            var author = project.querySelector('.owner a').textContent.trim();
+        for (var i = 0; i < rawProjects.length; i++) {
+            var p = rawProjects[i];
             projects.push({
-                id: id,
-                title: title,
-                author: author,
+                id: p.id,
+                title: p.title,
+                author: p.username,
             });
         }
         projects = this.shuffler(projects);
@@ -284,13 +260,16 @@ StudioView.prototype.loadNextPage = function () {
         }
         this.cleanupPlaceholders();
 
-        // All pages except the last have a next page button.
-        if (!doc.querySelector('.next-page')) {
+        if (rawProjects.length === 40) {
+            if (this.loadNextPageObserver) {
+                this.loadNextPageObserver.observe(this.projectList.lastChild);
+            }
+        } else {
             this.ended = true;
             this.onend();
         }
 
-        this.page++;
+        this.offset += projects.length;
         this.loadingPage = false;
         this.root.removeAttribute('loading');
 
@@ -306,7 +285,7 @@ StudioView.prototype.loadNextPage = function () {
 
     var url = StudioView.STUDIO_API
         .replace('$id', this.studioId)
-        .replace('$page', '' + this.page);
+        .replace('$offset', '' + this.offset);
     xhr.open('GET', url);
     xhr.send();
 };
@@ -319,40 +298,7 @@ StudioView.prototype.onselect = function (id, el) { };
 StudioView.prototype.onpageload = function () { };
 StudioView.prototype.onend = function () { };
 
-// Types of shufflers
-function shuffleList(list) {
-    // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
-    for (var i = list.length - 1; i > 0; i--) {
-        var random = Math.floor(Math.random() * (i + 1));
-        var tmp = list[i];
-        list[i] = list[random];
-        list[random] = tmp;
-    }
-}
-StudioView.Shufflers = {};
-StudioView.Shufflers.random = function (groupSize) {
-    groupSize = groupSize || Infinity;
-    return function (projects) {
-        if (groupSize === Infinity) {
-            shuffleList(projects);
-            return projects;
-        }
-        var result = [];
-        for (var i = 0; i < projects.length; i += groupSize) {
-            var group = projects.slice(i, i + groupSize);
-            shuffleList(group);
-            for (var j = 0; j < group.length; j++) {
-                result.push(group[j]);
-            }
-        }
-        return result;
-    };
-};
-
-// This can be any URL that is a proxy for https://scratch.mit.edu/site-api/projects/in/5235006/1/
-// Understandably scratch does not set CORS headers on this URL, but a proxy can set it manually.
-// $id will be replaced with the studio ID, and $page with the page.
-StudioView.STUDIO_API = 'https://trampoline.turbowarp.org/site-proxy/projects/in/$id/$page/';
+StudioView.STUDIO_API = 'https://trampoline.turbowarp.org/proxy/studios/$id/projectstemporary/$offset';
 
 // The URL to download thumbnails from.
 // $id is replaced with the project's ID.
@@ -360,22 +306,11 @@ StudioView.THUMBNAIL_SRC = 'https://cdn2.scratch.mit.edu/get_image/project/$id_1
 
 // The URL for project pages.
 // $id is replaced with the project ID.
-StudioView.PROJECT_PAGE = 'https://scratch.mit.edu/projects/$id/';
+StudioView.PROJECT_PAGE = 'https://turbowarp.org/$id';
 
 // The URL for studio pages.
 // $id is replaced with the studio ID.
 StudioView.STUDIO_PAGE = 'https://scratch.mit.edu/studios/$id/';
-
-// The text to appear under a project to credit the author of the project.
-// $author is replaced with the author's name.
-StudioView.AUTHOR_ATTRIBUTION = 'by $author';
-
-// The text to appear when hovering over a project.
-// $title becomes the project's title, $author becomes the author's name.
-StudioView.PROJECT_HOVER_TEXT = '$title by $author';
-
-// Displayed when the next page of projects could not be loaded.
-StudioView.LOAD_ERROR = 'There was an error loading the next page of projects.';
 
 // The amount of "placeholders" to insert before the next page loads.
 StudioView.PLACEHOLDER_COUNT = 9;

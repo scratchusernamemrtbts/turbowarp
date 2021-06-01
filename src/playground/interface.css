@@ -3,6 +3,8 @@ p {
 }
 a {
     color: #25d;
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .container {
@@ -10,23 +12,18 @@ a {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    box-sizing: border-box;
 }
 
+.editor {
+    min-width: 1024px;
+    min-height: 640px;
+    height: 100%;
+}
 .editor .center {
     height: 100%;
 }
 
-.player-only {
-    padding-bottom: 16px;
-}
-.player-only * {
-    box-sizing: border-box;
-}
 .player-only .center {
-    /* there's a couple extra pixels of border around the stage */
-    width: 482px;
     margin: auto;
 }
 .menu {
@@ -35,20 +32,54 @@ a {
 .section {
     margin: 8px 0 8px 0;
 }
-.footer p {
+
+.footer {
+    padding: 10px 0;
+    margin-top: 10px;
+    background: #eee;
+}
+.footer a {
+    font-weight: bold;
+    text-decoration: none;
+}
+[theme="dark"] .footer {
+    background-color: #151515;
+}
+.footer-content {
+    max-width: 600px;
+    margin: auto;
+}
+.footer-text {
     text-align: center;
-    font-size: small;
-    margin: 8px 0 8px 0;
+    margin: 5px 0 10px 0;
+}
+.footer-columns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    flex-wrap: wrap;
+}
+.footer-section {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    margin-bottom: 10px;
+}
+.footer-section > * {
+    margin-bottom: 10px;
+}
+.footer-header {
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #111;
-    }
-    .player-only {
-        color: #ddd;
-    }
-    .player-only a {
-        color: #4af;
-    }
+[theme="dark"] .container {
+    background-color: #111;
+}
+[theme="dark"] .player-only {
+    color: #ddd;
+}
+[theme="dark"] a {
+    color: #4af;
 }

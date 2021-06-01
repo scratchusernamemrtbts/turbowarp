@@ -13,6 +13,8 @@ import {
 import {
     showAlertWithTimeout
 } from '../reducers/alerts';
+import {openUsernameModal} from '../reducers/modals';
+import {setUsernameInvalid} from '../reducers/tw';
 
 /*
  * Higher Order Component to manage the connection to the cloud server.
@@ -25,7 +27,8 @@ const cloudManagerHOC = function (WrappedComponent) {
             super(props);
             this.cloudProvider = null;
             bindAll(this, [
-                'handleCloudDataUpdate'
+                'handleCloudDataUpdate',
+                'onInvalidUsername'
             ]);
 
             this.props.vm.on('HAS_CLOUD_DATA_UPDATE', this.handleCloudDataUpdate);
@@ -43,7 +46,9 @@ const cloudManagerHOC = function (WrappedComponent) {
             // tw: handle cases where we should explicitly close and reconnect() in the same update
             if (this.shouldReconnect(this.props, prevProps)) {
                 this.disconnectFromCloud();
-                this.connectToCloud();
+                if (this.shouldConnect(this.props)) {
+                    this.connectToCloud();
+                }
                 return;
             }
 
@@ -92,6 +97,7 @@ const cloudManagerHOC = function (WrappedComponent) {
                 this.props.vm,
                 this.props.username,
                 this.props.projectId);
+            this.cloudProvider.onInvalidUsername = this.onInvalidUsername;
             this.props.vm.setCloudProvider(this.cloudProvider);
         }
         disconnectFromCloud () {
@@ -109,6 +115,9 @@ const cloudManagerHOC = function (WrappedComponent) {
                 this.connectToCloud();
             }
         }
+        onInvalidUsername () {
+            this.props.onInvalidUsername();
+        }
         render () {
             const {
                 /* eslint-disable no-unused-vars */
@@ -119,6 +128,7 @@ const cloudManagerHOC = function (WrappedComponent) {
                 hasCloudPermission,
                 isShowingWithId,
                 onShowCloudInfo,
+                onInvalidUsername,
                 /* eslint-enable no-unused-vars */
                 vm,
                 ...componentProps
@@ -138,6 +148,7 @@ const cloudManagerHOC = function (WrappedComponent) {
         cloudHost: PropTypes.string,
         hasCloudPermission: PropTypes.bool,
         isShowingWithId: PropTypes.bool.isRequired,
+        onInvalidUsername: PropTypes.func,
         onShowCloudInfo: PropTypes.func,
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         username: PropTypes.string,
@@ -162,7 +173,11 @@ const cloudManagerHOC = function (WrappedComponent) {
     };
 
     const mapDispatchToProps = dispatch => ({
-        onShowCloudInfo: () => showAlertWithTimeout(dispatch, 'cloudInfo')
+        onShowCloudInfo: () => showAlertWithTimeout(dispatch, 'cloudInfo'),
+        onInvalidUsername: () => {
+            dispatch(setUsernameInvalid(true));
+            dispatch(openUsernameModal());
+        }
     });
 
     // Allow incoming props to override redux-provided props. Used to mock in tests.

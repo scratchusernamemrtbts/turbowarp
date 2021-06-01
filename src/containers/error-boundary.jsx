@@ -5,6 +5,7 @@ import BrowserModalComponent from '../components/browser-modal/browser-modal.jsx
 import CrashMessageComponent from '../components/crash-message/crash-message.jsx';
 import log from '../lib/log.js';
 import {recommendedBrowser} from '../lib/supported-browser';
+import analytics from '../lib/analytics';
 
 class ErrorBoundary extends React.Component {
     constructor (props) {
@@ -33,10 +34,16 @@ class ErrorBoundary extends React.Component {
             });
         }
 
+        // tw: Track error event. Error message will be included when plausible's custom props are ready.
+        if (recommendedBrowser()) {
+            analytics.twEvent('Crash');
+        }
+
         // Display fallback UI
         this.setState({
             hasError: true,
-            errorId: window.Sentry ? window.Sentry.lastEventId() : null
+            errorId: window.Sentry ? window.Sentry.lastEventId() : null,
+            errorMessage: `${(error && error.message) || error}`
         });
 
         // Log error locally for debugging as well.
@@ -57,6 +64,7 @@ class ErrorBoundary extends React.Component {
                 return (
                     <CrashMessageComponent
                         eventId={this.state.errorId}
+                        errorMessage={this.state.errorMessage}
                         onReload={this.handleReload}
                     />
                 );

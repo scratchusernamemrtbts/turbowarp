@@ -6,6 +6,11 @@ let messages = defineMessages({
         defaultMessage: 'my variable',
         description: 'Name for the default variable',
         id: 'gui.defaultProject.variable'
+    },
+    comment: {
+        defaultMessage: 'This is how you detect TurboWarp.\n\nSee here for more info:\nhttps://scratch.mit.edu/projects/414716080/',
+        description: 'Script comment describing the "is compiled?" block',
+        id: 'tw.defaultProject.comment'
     }
 });
 
@@ -85,24 +90,24 @@ const projectData = translateFunction => {
                 comments: {
                     'UgZfouDT0`j;EW7Y3N2]': {
                         blockId: 'Z2l`f?]oj|=Nq/GH@G_u',
-                        x: 685.1870417418297,
-                        y: 258.07407407407516,
-                        width: 410.370361328125,
-                        height: 201.48150634765625,
+                        x: 685,
+                        y: 258,
+                        width: 400,
+                        height: 200,
                         minimized: false,
-                        text: 'This is how you detect TurboWarp.\n\nSee here for more info:\nhttps://scratch.mit.edu/projects/414716080/'
+                        text: translator(messages.comment)
                     }
                 },
                 currentCostume: 0,
                 costumes: [
                     {
-                        assetId: '14e46ec3e2ba471c2adfe8f119052307',
+                        assetId: 'b4ab6b3b69de1bc3ed6a94ace172a0b0',
                         name: translator(messages.costume, {index: 1}),
                         bitmapResolution: 1,
-                        md5ext: '14e46ec3e2ba471c2adfe8f119052307.svg',
+                        md5ext: 'b4ab6b3b69de1bc3ed6a94ace172a0b0.svg',
                         dataFormat: 'svg',
-                        rotationCenterX: 0,
-                        rotationCenterY: 0
+                        rotationCenterX: 44,
+                        rotationCenterY: 44
                     }
                 ],
                 sounds: [],

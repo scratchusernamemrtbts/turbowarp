@@ -15,9 +15,14 @@
     z-index: $z-index-stage-header;
 }
 
+/* tw: support dark mode */
+[theme="dark"] .stage-header-wrapper-overlay {
+    background-color: #111;
+}
+
 /* tw: do not show color in header when embedded */
-.stage-header-embed {
-    background-color: white;
+.embedded {
+    background-color: transparent;
 }
 
 .stage-menu-wrapper {

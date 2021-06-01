@@ -25,6 +25,7 @@ import storage from './storage';
 
 import {MISSING_PROJECT_ID} from './tw-missing-project';
 import VM from 'scratch-vm';
+import * as progressMonitor from '../components/loader/tw-progress-monitor';
 
 /* Higher Order Component to provide behavior for loading projects by id. If
  * there's no id, the default project is loaded.
@@ -71,13 +72,35 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject (projectId, loadingState) {
-            // tw: clear the VM before fetching
-            // this matters because we fetch many projects in the same VM,
-            // and the old project should stop when starting to fetch the new one
-            // VM.loadProject also does this, but that won't run until after fetching (which may take a while)
+            // tw: clear and stop the VM before fetching
+            // these will also happen later after the project is fetched, but fetching may take a while and
+            // the project shouldn't be running while fetching the new project
             this.props.vm.clear();
-            return storage
-                .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON)
+            this.props.vm.stop();
+
+            let assetPromise;
+            // In case running in node...
+            let projectUrl = typeof URLSearchParams === 'undefined' ?
+                null :
+                new URLSearchParams(location.search).get('project_url');
+            if (projectUrl) {
+                if (!projectUrl.startsWith('http:') && !projectUrl.startsWith('https:')) {
+                    projectUrl = `https://${projectUrl}`;
+                }
+                assetPromise = progressMonitor.fetchWithProgress(projectUrl)
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`Request returned status ${r.status}`);
+                        }
+                        return r.arrayBuffer();
+                    })
+                    .then(buffer => ({data: buffer}));
+            } else {
+                assetPromise = storage
+                    .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON);
+            }
+
+            return assetPromise
                 .then(projectAsset => {
                     // tw: If the project data appears to be HTML, then the result is probably an nginx 404 page,
                     // and the "missing project" project should be loaded instead.

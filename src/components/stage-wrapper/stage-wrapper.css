@@ -33,3 +33,13 @@
     flex-direction: column;
     align-items: center;
 }
+
+/* tw: support dark mode */
+[theme="dark"] .stage-wrapper.full-screen {
+    background-color: #111;
+}
+
+/* tw: do not show color in embeds */
+.stage-wrapper.embedded {
+    background-color: transparent;
+}

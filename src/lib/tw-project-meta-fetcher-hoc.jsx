@@ -10,17 +10,32 @@ const API_URL = 'https://trampoline.turbowarp.org/proxy/projects/$id';
 
 const fetchProjectMeta = projectId => fetch(API_URL.replace('$id', projectId))
     .then(r => {
+        if (r.status === 404) {
+            throw new Error('Probably unshared (API returned 404)');
+        }
         if (r.status !== 200) {
             throw new Error(`Unexpected status code: ${r.status}`);
         }
         return r.json();
     });
 
+const getNoIndexTag = () => document.querySelector('meta[name="robots"][content="noindex"]');
+const setIndexable = indexable => {
+    if (indexable) {
+        const tag = getNoIndexTag();
+        if (tag) {
+            tag.remove();
+        }
+    } else if (!getNoIndexTag()) {
+        const tag = document.createElement('meta');
+        tag.name = 'robots';
+        tag.content = 'noindex';
+        document.head.appendChild(tag);
+    }
+};
+
 const TWProjectMetaFetcherHOC = function (WrappedComponent) {
     class ProjectMetaFetcherComponent extends React.Component {
-        componentDidMount () {
-            this.initialTitle = document.title;
-        }
         shouldComponentUpdate (nextProps) {
             return this.props.projectId !== nextProps.projectId;
         }
@@ -29,7 +44,6 @@ const TWProjectMetaFetcherHOC = function (WrappedComponent) {
             this.props.onSetAuthor('', '');
             this.props.onSetDescription('', '');
             const projectId = this.props.projectId;
-            document.title = this.initialTitle;
             // Don't try to load metadata for empty projects.
             if (projectId === '0') {
                 return;
@@ -42,7 +56,6 @@ const TWProjectMetaFetcherHOC = function (WrappedComponent) {
                     }
                     const title = data.title;
                     if (title) {
-                        document.title = `${title} - TurboWarp`;
                         this.props.onSetProjectTitle(title);
                     }
                     const authorName = data.author.username;
@@ -55,18 +68,29 @@ const TWProjectMetaFetcherHOC = function (WrappedComponent) {
                     if (instructions || credits) {
                         this.props.onSetDescription(instructions, credits);
                     }
+                    // We only want projects that are somewhat noteworthy to appear in search engines.
+                    const {views, loves, favorites} = data.stats;
+                    setIndexable(
+                        views >= 50 &&
+                        loves >= 5 &&
+                        favorites >= 5
+                    );
                 })
                 .catch(err => {
+                    setIndexable(false);
+                    if (`${err}`.includes('unshared')) {
+                        this.props.onSetDescription('unshared', 'unshared');
+                    }
                     log.warn('cannot fetch project meta', err);
                 });
-        }
-        componentWillUnmount () {
-            document.title = this.initialTitle;
         }
         render () {
             const {
                 /* eslint-disable no-unused-vars */
                 projectId,
+                onSetAuthor,
+                onSetDescription,
+                onSetProjectTitle,
                 /* eslint-enable no-unused-vars */
                 ...props
             } = this.props;
